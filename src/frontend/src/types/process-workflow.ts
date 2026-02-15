@@ -61,7 +61,8 @@ export type StepType =
   | 'policy_check'       // Evaluates existing compliance policy by UUID
   | 'delivery'           // Triggers DeliveryService to apply changes
   | 'create_asset_review' // Creates a DataAssetReview for formal review tracking
-  | 'webhook';           // Calls external HTTP endpoints via UC Connections or direct URL
+  | 'webhook'            // Calls external HTTP endpoints via UC Connections or direct URL
+  | 'user_action';       // Approval workflow: collect user input (reason, acceptances, fields)
 
 export type ExecutionStatus =
   | 'pending'

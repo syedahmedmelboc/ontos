@@ -19,6 +19,7 @@ import {
   GitBranch,
   FileSearch,
   Globe,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 import { TriggerType, EntityType, StepType } from '@/types/process-workflow';
@@ -40,6 +41,7 @@ export const STEP_ICONS: Record<StepType, LucideIcon> = {
   delivery: Truck,
   create_asset_review: FileSearch,
   webhook: Globe,
+  user_action: MessageSquare,
 };
 
 /**
@@ -59,6 +61,7 @@ export const STEP_COLORS: Record<StepType, string> = {
   delivery: 'indigo',
   create_asset_review: 'teal',
   webhook: 'orange',
+  user_action: 'sky',
 };
 
 /**

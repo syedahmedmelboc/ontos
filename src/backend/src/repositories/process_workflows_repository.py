@@ -22,6 +22,7 @@ from src.models.process_workflows import (
     WorkflowExecutionCreate,
     TriggerType,
     EntityType,
+    WorkflowType,
 )
 from src.common.logging import get_logger
 
@@ -36,13 +37,16 @@ class ProcessWorkflowRepository:
         db: Session,
         *,
         is_active: Optional[bool] = None,
+        workflow_type: Optional[WorkflowType] = None,
         include_steps: bool = True
     ) -> List[ProcessWorkflowDb]:
-        """List all workflows, optionally filtered by active status."""
+        """List all workflows, optionally filtered by active status and workflow_type."""
         query = db.query(ProcessWorkflowDb)
         
         if is_active is not None:
             query = query.filter(ProcessWorkflowDb.is_active == is_active)
+        if workflow_type is not None:
+            query = query.filter(ProcessWorkflowDb.workflow_type == workflow_type.value)
         
         if include_steps:
             query = query.options(joinedload(ProcessWorkflowDb.steps))
@@ -130,6 +134,7 @@ class ProcessWorkflowRepository:
             description=workflow.description,
             trigger_config=workflow.trigger.model_dump_json(),
             scope_config=workflow.scope.model_dump_json() if workflow.scope else None,
+            workflow_type=(getattr(workflow, 'workflow_type', WorkflowType.PROCESS) or WorkflowType.PROCESS).value,
             is_active=workflow.is_active,
             is_default=is_default,
             created_by=created_by,
@@ -179,6 +184,8 @@ class ProcessWorkflowRepository:
             db_workflow.trigger_config = workflow.trigger.model_dump_json()
         if workflow.scope is not None:
             db_workflow.scope_config = workflow.scope.model_dump_json()
+        if workflow.workflow_type is not None:
+            db_workflow.workflow_type = workflow.workflow_type.value
         if workflow.is_active is not None:
             db_workflow.is_active = workflow.is_active
         

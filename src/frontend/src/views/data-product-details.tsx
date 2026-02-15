@@ -35,6 +35,7 @@ import AccessGrantsPanel from '@/components/access/access-grants-panel';
 import { useDomains } from '@/hooks/use-domains';
 import RequestProductActionDialog from '@/components/data-products/request-product-action-dialog';
 import CommitDraftDialog from '@/components/data-products/commit-draft-dialog';
+import ApprovalWizardDialog from '@/components/workflows/approval-wizard-dialog';
 import EntityCostsPanel from '@/components/costs/entity-costs-panel';
 import LinkContractToPortDialog from '@/components/data-products/link-contract-to-port-dialog';
 import VersioningRecommendationDialog from '@/components/common/versioning-recommendation-dialog';
@@ -116,6 +117,8 @@ export default function DataProductDetails() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionResponse | null>(null);
   const [subscribers, setSubscribers] = useState<SubscribersListResponse | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionWizardOpen, setSubscriptionWizardOpen] = useState(false);
+  const [subscriptionWorkflowId, setSubscriptionWorkflowId] = useState<string | null>(null);
 
   // Clone/Commit draft states
   const [isCommitDraftDialogOpen, setIsCommitDraftDialogOpen] = useState(false);
@@ -292,8 +295,33 @@ export default function DataProductDetails() {
     }
   };
 
-  // Subscription handlers
-  const handleSubscribe = async () => {
+  // Subscription: open approval wizard (or fallback to direct subscribe)
+  const handleSubscribeClick = async () => {
+    if (!productId) return;
+    try {
+      const res = await get<{ workflow_id: string }>('/api/approvals/default-subscription-workflow');
+      if (res.data?.workflow_id) {
+        setSubscriptionWorkflowId(res.data.workflow_id);
+        setSubscriptionWizardOpen(true);
+      } else {
+        toast({
+          title: 'Approval workflow not configured',
+          description: 'Subscribing directly. Load default workflows in Settings to use the approval flow.',
+          variant: 'default',
+        });
+        await handleSubscribeDirect();
+      }
+    } catch {
+      toast({
+        title: 'Approval workflow not configured',
+        description: 'Subscribing directly. Load default workflows in Settings to use the approval flow.',
+        variant: 'default',
+      });
+      await handleSubscribeDirect();
+    }
+  };
+
+  const handleSubscribeDirect = async () => {
     if (!productId) return;
     setSubscriptionLoading(true);
     try {
@@ -301,12 +329,9 @@ export default function DataProductDetails() {
       if (response.data) {
         setSubscriptionStatus(response.data);
         toast({ title: 'Subscribed', description: 'You will now receive notifications about this product.' });
-        // Refresh subscribers count
         if (canWrite || canAdmin) {
           const subscribersResp = await get<SubscribersListResponse>(`/api/data-products/${productId}/subscribers`);
-          if (subscribersResp.data) {
-            setSubscribers(subscribersResp.data);
-          }
+          if (subscribersResp.data) setSubscribers(subscribersResp.data);
         }
       }
     } catch (err) {
@@ -314,6 +339,23 @@ export default function DataProductDetails() {
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setSubscriptionLoading(false);
+    }
+  };
+
+  const handleSubscriptionWizardComplete = async () => {
+    setSubscriptionWizardOpen(false);
+    setSubscriptionWorkflowId(null);
+    toast({ title: 'Subscribed', description: 'You will now receive notifications about this product.' });
+    if (!productId) return;
+    try {
+      const subscriptionResp = await get<SubscriptionResponse>(`/api/data-products/${productId}/subscription`);
+      if (subscriptionResp.data) setSubscriptionStatus(subscriptionResp.data);
+      if (canWrite || canAdmin) {
+        const subscribersResp = await get<SubscribersListResponse>(`/api/data-products/${productId}/subscribers`);
+        if (subscribersResp.data) setSubscribers(subscribersResp.data);
+      }
+    } catch (err) {
+      setSubscriptionStatus({ subscribed: true });
     }
   };
 
@@ -980,7 +1022,7 @@ export default function DataProductDetails() {
             ) : (
               <Button
                 variant="default"
-                onClick={handleSubscribe}
+                onClick={handleSubscribeClick}
                 disabled={subscriptionLoading}
                 size="sm"
               >
@@ -1575,6 +1617,20 @@ export default function DataProductDetails() {
         productName={product.name}
         onSuccess={() => fetchProductDetails()}
       />
+
+      {/* Subscription approval wizard */}
+      {subscriptionWizardOpen && productId && subscriptionWorkflowId && (
+        <ApprovalWizardDialog
+          isOpen={subscriptionWizardOpen}
+          onOpenChange={setSubscriptionWizardOpen}
+          entityType="data_product"
+          entityId={productId}
+          preselectedWorkflowId={subscriptionWorkflowId}
+          completionAction="subscribe"
+          autoStartWithPreselected
+          onComplete={handleSubscriptionWizardComplete}
+        />
+      )}
 
       {/* Nested Entity Form Dialogs */}
       <InputPortFormDialog

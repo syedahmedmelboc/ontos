@@ -4,6 +4,8 @@
 
 from . import app_settings
 from . import access_grants
+from . import agreement_wizard_sessions
+from . import agreements
 from . import audit_log
 from . import change_log
 from . import comments

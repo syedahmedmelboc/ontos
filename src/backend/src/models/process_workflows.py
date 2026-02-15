@@ -67,6 +67,12 @@ class ScopeType(str, Enum):
     DOMAIN = "domain"
 
 
+class WorkflowType(str, Enum):
+    """Type of workflow: process (event-driven) or approval (wizard-driven)."""
+    PROCESS = "process"
+    APPROVAL = "approval"
+
+
 class StepType(str, Enum):
     """Types of workflow steps."""
     VALIDATION = "validation"
@@ -82,6 +88,8 @@ class StepType(str, Enum):
     DELIVERY = "delivery"  # Triggers DeliveryService to apply changes
     CREATE_ASSET_REVIEW = "create_asset_review"  # Creates a DataAssetReview for formal review tracking
     WEBHOOK = "webhook"  # Calls external HTTP endpoints via UC Connections or direct URL
+    USER_ACTION = "user_action"  # Approval workflow: collect user input (reason, acceptances, fields)
+    GENERATE_PDF = "generate_pdf"  # Approval workflow: build agreement PDF from step_results + pdf_contribution
 
 
 class ExecutionStatus(str, Enum):
@@ -168,6 +176,30 @@ class ApprovalStepConfig(BaseModel):
                 "approvers": "domain_owners",
                 "timeout_days": 7,
                 "require_all": False
+            }
+        }
+
+
+class UserActionStepConfig(BaseModel):
+    """Configuration for approval workflow user_action steps (wizard: collect reason, acceptances, fields)."""
+    title: Optional[str] = Field(None, description="Step title shown in wizard")
+    description: Optional[str] = Field(None, description="Step description")
+    document_url: Optional[str] = Field(None, description="URL of document to display (e.g. legal terms)")
+    document_content: Optional[str] = Field(None, description="Inline document content")
+    required_acceptances: Optional[List[Dict[str, Any]]] = Field(
+        default_factory=list,
+        description="List of { id, label, type: 'checkbox' } for required checkboxes",
+    )
+    required_fields: Optional[List[Dict[str, Any]]] = Field(
+        default_factory=list,
+        description="List of { id, label, type: 'text'|'text_list', required?: bool }",
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "Enter a reason",
+                "required_fields": [{"id": "reason", "label": "Reason for approval or rejection", "type": "text", "required": True}]
             }
         }
 
@@ -344,6 +376,7 @@ class ProcessWorkflowBase(BaseModel):
     description: Optional[str] = Field(None, description="Workflow description")
     trigger: WorkflowTrigger = Field(..., description="Trigger configuration")
     scope: Optional[WorkflowScope] = Field(default_factory=lambda: WorkflowScope(type=ScopeType.ALL), description="Scope configuration")
+    workflow_type: WorkflowType = Field(default=WorkflowType.PROCESS, description="process (event-driven) or approval (wizard-driven)")
     is_active: bool = Field(default=True, description="Whether workflow is active")
 
 
@@ -358,6 +391,7 @@ class ProcessWorkflowUpdate(BaseModel):
     description: Optional[str] = None
     trigger: Optional[WorkflowTrigger] = None
     scope: Optional[WorkflowScope] = None
+    workflow_type: Optional[WorkflowType] = None
     is_active: Optional[bool] = None
     steps: Optional[List[WorkflowStepCreate]] = None
 

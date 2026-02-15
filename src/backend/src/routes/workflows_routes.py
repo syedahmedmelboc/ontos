@@ -32,6 +32,7 @@ from src.models.process_workflows import (
     TriggerContext,
     TriggerType,
     EntityType,
+    WorkflowType,
 )
 
 logger = get_logger(__name__)
@@ -53,11 +54,13 @@ def get_workflow_executor(db: Session = Depends(get_db)) -> WorkflowExecutor:
 async def list_workflows(
     request: Request,
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    workflow_type: Optional[str] = Query(None, description="Filter by workflow_type: process | approval"),
     manager: WorkflowsManager = Depends(get_workflows_manager),
     _: bool = Depends(PermissionChecker('settings', FeatureAccessLevel.READ_ONLY)),
 ) -> WorkflowListResponse:
-    """List all process workflows."""
-    workflows = manager.list_workflows(is_active=is_active)
+    """List all process workflows (or approval workflows when workflow_type=approval)."""
+    wf_type = WorkflowType(workflow_type) if workflow_type in ('process', 'approval') else None
+    workflows = manager.list_workflows(is_active=is_active, workflow_type=wf_type)
     return WorkflowListResponse(workflows=workflows, total=len(workflows))
 
 
@@ -789,13 +792,14 @@ async def handle_workflow_approval(
     Request body:
         - execution_id: str - ID of the paused execution
         - approved: bool - Whether the request was approved
-        - message: Optional[str] - Message from the approver
+        - message: Optional[str] - Message/reason from the approver (e.g. from default approval response workflow)
+        - reason: Optional[str] - Reason for the decision (alias for message)
     """
     try:
         body = await request.json()
         execution_id = body.get('execution_id')
         approved = body.get('approved', False)
-        message = body.get('message')
+        message = body.get('message') or body.get('reason')
         
         if not execution_id:
             raise HTTPException(status_code=400, detail="execution_id is required")
@@ -806,7 +810,11 @@ async def handle_workflow_approval(
         result = executor.resume_workflow(
             execution_id=execution_id,
             step_result=approved,
-            result_data={'message': message, 'decision': 'approved' if approved else 'rejected'},
+            result_data={
+                'message': message,
+                'reason': message,
+                'decision': 'approved' if approved else 'rejected',
+            },
             user_email=user_email,
         )
         

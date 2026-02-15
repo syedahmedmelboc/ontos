@@ -73,6 +73,7 @@ import type { EntitySemanticLink } from '@/types/semantic-link';
 import { Label } from '@/components/ui/label';
 import { Plus, Server, Database } from 'lucide-react';
 import RequestDatasetActionDialog from '@/components/datasets/request-dataset-action-dialog';
+import ApprovalWizardDialog from '@/components/workflows/approval-wizard-dialog';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 
@@ -93,6 +94,8 @@ export default function DatasetDetails() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<DatasetSubscriptionResponse | null>(null);
   const [subscribers, setSubscribers] = useState<DatasetSubscribersListResponse | null>(null);
   const [subscribing, setSubscribing] = useState(false);
+  const [subscriptionWizardOpen, setSubscriptionWizardOpen] = useState(false);
+  const [subscriptionWorkflowId, setSubscriptionWorkflowId] = useState<string | null>(null);
 
   // Request dialog state
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -230,29 +233,42 @@ export default function DatasetDetails() {
     };
   }, [setStaticSegments, setDynamicTitle, dataset?.name, t]);
 
-  // Toggle subscription
-  const toggleSubscription = async () => {
+  // Subscribe: open approval wizard or fallback to direct POST
+  const handleSubscribeClick = async () => {
     if (!datasetId) return;
+    try {
+      const res = await fetch('/api/approvals/default-subscription-workflow');
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.workflow_id) {
+          setSubscriptionWorkflowId(data.workflow_id);
+          setSubscriptionWizardOpen(true);
+          return;
+        }
+      }
+    } catch {
+      // fall through to direct subscribe
+    }
+    toast({
+      title: t('messages.error'),
+      description: 'Approval workflow not configured. Subscribing directly. Load default workflows in Settings to use the approval flow.',
+      variant: 'default',
+    });
+    await subscribeDirect();
+  };
 
+  const subscribeDirect = async () => {
+    if (!datasetId) return;
     setSubscribing(true);
     try {
-      const isSubscribed = subscriptionStatus?.subscribed;
-      const method = isSubscribed ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/datasets/${datasetId}/subscribe`, {
-        method,
-      });
-
+      const response = await fetch(`/api/datasets/${datasetId}/subscribe`, { method: 'POST' });
       if (!response.ok) throw new Error(t('details.subscription.error'));
-
       const data = await response.json();
       setSubscriptionStatus(data);
       fetchSubscribers();
-
       toast({
-        title: isSubscribed ? t('details.subscription.unsubscribed') : t('details.subscription.subscribed'),
-        description: isSubscribed
-          ? t('details.subscription.unsubscribeMessage')
-          : t('details.subscription.subscribeMessage'),
+        title: t('details.subscription.subscribed'),
+        description: t('details.subscription.subscribeMessage'),
       });
     } catch (err) {
       toast({
@@ -263,6 +279,41 @@ export default function DatasetDetails() {
     } finally {
       setSubscribing(false);
     }
+  };
+
+  const handleUnsubscribe = async () => {
+    if (!datasetId) return;
+    setSubscribing(true);
+    try {
+      const response = await fetch(`/api/datasets/${datasetId}/subscribe`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(t('details.subscription.error'));
+      const data = await response.json();
+      setSubscriptionStatus(data);
+      fetchSubscribers();
+      toast({
+        title: t('details.subscription.unsubscribed'),
+        description: t('details.subscription.unsubscribeMessage'),
+      });
+    } catch (err) {
+      toast({
+        title: t('messages.error'),
+        description: t('details.subscription.error'),
+        variant: 'destructive',
+      });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const handleSubscriptionWizardComplete = () => {
+    setSubscriptionWizardOpen(false);
+    setSubscriptionWorkflowId(null);
+    fetchSubscriptionStatus();
+    fetchSubscribers();
+    toast({
+      title: t('details.subscription.subscribed'),
+      description: t('details.subscription.subscribeMessage'),
+    });
   };
 
   // Delete dataset
@@ -575,7 +626,7 @@ export default function DatasetDetails() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={toggleSubscription}
+                  onClick={subscriptionStatus?.subscribed ? handleUnsubscribe : handleSubscribeClick}
                   disabled={subscribing}
                 >
                   {subscriptionStatus?.subscribed ? (
@@ -1110,6 +1161,20 @@ export default function DatasetDetails() {
             fetchDataset();
             setIsRequestDialogOpen(false);
           }}
+        />
+      )}
+
+      {/* Subscription approval wizard */}
+      {subscriptionWizardOpen && datasetId && subscriptionWorkflowId && (
+        <ApprovalWizardDialog
+          isOpen={subscriptionWizardOpen}
+          onOpenChange={setSubscriptionWizardOpen}
+          entityType="dataset"
+          entityId={datasetId}
+          preselectedWorkflowId={subscriptionWorkflowId}
+          completionAction="subscribe"
+          autoStartWithPreselected
+          onComplete={handleSubscriptionWizardComplete}
         />
       )}
     </div>
