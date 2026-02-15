@@ -1399,6 +1399,56 @@ class SemanticModelsManager:
 
         return results
 
+    def get_resource_description(
+        self, resource_iri: str, expand_blank_depth: int = 1
+    ) -> Dict[str, Any]:
+        """Get full description of a resource: all direct triples plus expanded blank nodes.
+
+        For SHACL shapes with nested sh:property [ ... ], the blank node contents
+        (path, minInclusive, etc.) are included in expanded form so the UI can show them.
+        """
+        from rdflib import URIRef
+
+        uri = URIRef(resource_iri)
+        triples_out: List[Dict[str, Any]] = []
+
+        def serialize_object(obj: Any) -> tuple[str, str, Any]:
+            """Return (object_value, objectType, subject_ref_for_expansion or None).
+            subject_ref_for_expansion is the node to use for (node, None, None) triples.
+            """
+            if isinstance(obj, Literal):
+                return (str(obj), "literal", None)
+            if isinstance(obj, URIRef):
+                # Skolemized blank nodes are stored as URIs; expand them like bnodes
+                obj_str = str(obj)
+                if obj_str.startswith("urn:ontos:bnode:"):
+                    return (obj_str, "bnode", obj)
+                return (obj_str, "uri", None)
+            if isinstance(obj, BNode):
+                return (str(obj), "bnode", obj)
+            return (str(obj), "literal", None)
+
+        for _s, p, o in self._graph.triples((uri, None, None)):
+            obj_val, obj_type, expand_subj = serialize_object(o)
+            entry: Dict[str, Any] = {
+                "predicate": str(p),
+                "object": obj_val,
+                "objectType": obj_type,
+            }
+            if obj_type == "bnode" and expand_subj is not None and expand_blank_depth >= 1:
+                expanded: List[Dict[str, Any]] = []
+                for _bs, bp, bo in self._graph.triples((expand_subj, None, None)):
+                    bo_val, bo_type, _ = serialize_object(bo)
+                    expanded.append({
+                        "predicate": str(bp),
+                        "object": bo_val,
+                        "objectType": bo_type,
+                    })
+                entry["expanded"] = expanded
+            triples_out.append(entry)
+
+        return {"iri": resource_iri, "triples": triples_out}
+
     # --- App Entities & Incremental Link Updates ---
 
     def _load_app_entities_into_graph(self) -> None:
