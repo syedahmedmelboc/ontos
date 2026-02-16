@@ -1158,7 +1158,7 @@ workflows:
   # Looked up by trigger type for_approval_response; name is for display only.
   - id: "approval-response"
     name: "Approval response"
-    description: "Default workflow for approval response: enter a reason and approve or reject. Replaces the hardcoded approval dialog."
+    description: "Default workflow for approval response: enter a reason and approve or reject."
     workflow_type: "approval"
     trigger:
       type: "for_approval_response"
@@ -1193,7 +1193,7 @@ workflows:
   # Looked up by trigger type for_subscribe; name is for display only.
   - id: "subscription"
     name: "Subscription"
-    description: "Default workflow for subscribing to a data product or dataset: reason required, then complete. Used with completion_action=subscribe."
+    description: "Default workflow for subscribing to a data product or dataset: reason required, then complete."
     workflow_type: "approval"
     trigger:
       type: "for_subscribe"
