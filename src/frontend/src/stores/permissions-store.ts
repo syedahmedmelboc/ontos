@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { useEffect } from 'react';
 import { UserPermissions, FeatureAccessLevel, AppRole } from '@/types/settings'; // Import AppRole
 import { ACCESS_LEVEL_ORDER } from '@/lib/permissions';
+import { usePersonaStore } from './persona-store';
 
 interface PermissionsState {
     permissions: UserPermissions; // User's effective permissions (may be overridden)
@@ -17,7 +18,7 @@ interface PermissionsState {
     fetchAvailableRoles: () => Promise<void>; // New action
     fetchRequestableRoles: () => Promise<void>; // Fetch roles the user can request
     fetchAppliedOverride: () => Promise<void>; // New action to read persisted override
-    setRoleOverride: (roleId: string | null) => void; // New action
+    setRoleOverride: (roleId: string | null) => Promise<void>; // Returns Promise so callers can await
     hasPermission: (featureId: string, requiredLevel: FeatureAccessLevel) => boolean;
     getPermissionLevel: (featureId: string) => FeatureAccessLevel;
     initializeStore: () => Promise<void>; // New action
@@ -178,27 +179,28 @@ const usePermissionsStore = create<PermissionsState>((set, get) => ({
         }
     },
 
-    setRoleOverride: (roleId: string | null) => {
-        (async () => {
-            // Optimistic local state update
-            set({ appliedRoleId: roleId });
-            try {
-                await fetch('/api/user/role-override', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role_id: roleId })
-                });
-            } catch { /* ignore */ }
-            // Force-refresh state so views recompute immediately
-            try {
-                await Promise.all([
-                    get().fetchPermissions(),
-                    get().fetchAvailableRoles(),
-                    get().fetchAppliedOverride()
-                ]);
-            } catch { /* ignore */ }
-            // No full reload — views already recompute from refreshed store state
-        })();
+    setRoleOverride: async (roleId: string | null) => {
+        // Optimistic local state update
+        set({ appliedRoleId: roleId });
+        try {
+            await fetch('/api/user/role-override', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role_id: roleId })
+            });
+        } catch { /* ignore */ }
+        // Force-refresh state so views recompute immediately
+        try {
+            await Promise.all([
+                get().fetchPermissions(),
+                get().fetchAvailableRoles(),
+                get().fetchAppliedOverride()
+            ]);
+        } catch { /* ignore */ }
+        // Refresh allowed personas so the persona switcher and sidebar reflect the new role
+        try {
+            await usePersonaStore.getState().fetchAllowedPersonas();
+        } catch { /* ignore */ }
     },
 
     hasPermission: (featureId: string, requiredLevel: FeatureAccessLevel): boolean => {
