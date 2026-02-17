@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme';
 import Layout from './components/layout/layout';
 import { TooltipProvider } from './components/ui/tooltip';
@@ -50,6 +50,10 @@ import ProjectsView from './views/projects';
 import AuditTrail from './views/audit-trail';
 import WorkflowDesignerView from './views/workflow-designer';
 import Workflows from './views/workflows';
+import OntologySearchView from './views/ontology-search';
+import OntologyHomeView from './views/ontology-home';
+import CollectionsView from './views/collections';
+import BusinessTermsView from './views/business-terms';
 
 export default function App() {
   const fetchUserInfo = useUserStore((state: any) => state.fetchUserInfo);
@@ -82,7 +86,80 @@ export default function App() {
         }}>
           <Layout>
             <Routes>
+              {/* Global home */}
               <Route path="/" element={<Home />} />
+
+              {/* === Persona: Data Consumer /consumer === */}
+              <Route path="/consumer" element={<Home />} />
+              <Route path="/consumer/my-products" element={<MyProducts />} />
+              <Route path="/consumer/lineage" element={<DataCatalog />} />
+              <Route path="/consumer/requests" element={<MyRequests />} />
+
+              {/* === Persona: Data Producer /producer === */}
+              <Route path="/producer" element={<Home />} />
+              <Route path="/producer/products" element={<DataProducts />} />
+              <Route path="/producer/datasets" element={<Datasets />} />
+              <Route path="/producer/contracts" element={<DataContracts />} />
+              <Route path="/producer/requests" element={<DataAssetReviews />} />
+
+              {/* === Persona: Data Product Owner /owner === */}
+              <Route path="/owner" element={<Home />} />
+              <Route path="/owner/products" element={<DataProducts />} />
+              <Route path="/owner/contracts" element={<DataContracts />} />
+              <Route path="/owner/consumers" element={<DataProducts />} />
+              <Route path="/owner/health" element={<Compliance />} />
+
+              {/* === Persona: Data Steward /steward === */}
+              <Route path="/steward" element={<Home />} />
+              <Route path="/steward/commander" element={<CatalogCommander />} />
+              <Route path="/steward/compliance" element={<Compliance />} />
+              <Route path="/steward/reviews" element={<DataAssetReviews />} />
+              <Route path="/steward/master-data" element={<MasterDataManagement />} />
+
+              {/* === Persona: Data Governance Officer /governance === */}
+              <Route path="/governance" element={<Home />} />
+              <Route path="/governance/domains" element={<DataDomainsView />} />
+              <Route path="/governance/teams" element={<TeamsView />} />
+              <Route path="/governance/projects" element={<ProjectsView />} />
+              <Route path="/governance/policies" element={<Compliance />} />
+              <Route path="/governance/tags" element={<Settings />} />
+              <Route path="/governance/workflows" element={<Workflows />} />
+              <Route path="/governance/master-data" element={<MasterDataManagement />} />
+              <Route path="/governance/estates" element={<EstateManager />} />
+
+              {/* === Persona: Security Officer /security === */}
+              <Route path="/security" element={<Home />} />
+              <Route path="/security/features" element={<SecurityFeatures />} />
+              <Route path="/security/entitlements" element={<Entitlements />} />
+              <Route path="/security/sync" element={<EntitlementsSync />} />
+
+              {/* === Persona: Ontology Engineer /ontology === */}
+              <Route path="/ontology" element={<OntologyHomeView />} />
+              <Route path="/ontology/domains" element={<DataDomainsView />} />
+              <Route path="/ontology/collections" element={<CollectionsView />} />
+              <Route path="/ontology/glossaries" element={<BusinessTermsView />} />
+              <Route path="/ontology/concepts" element={<OntologySearchView />} />
+              <Route path="/ontology/properties" element={<OntologySearchView />} />
+              <Route path="/ontology/ontologies" element={<CollectionsView />} />
+              <Route path="/ontology/kg" element={<OntologySearchView />} />
+
+              {/* === Persona: Business Term Owner /terms === */}
+              <Route path="/terms" element={<Home />} />
+              <Route path="/terms/glossary" element={<BusinessTermsView />} />
+              <Route path="/terms/requests" element={<DataAssetReviews />} />
+
+              {/* === Persona: Administrator /admin === */}
+              <Route path="/admin" element={<Home />} />
+              <Route path="/admin/git" element={<Settings />} />
+              <Route path="/admin/jobs" element={<Settings />} />
+              <Route path="/admin/roles" element={<Settings />} />
+              <Route path="/admin/search" element={<Settings />} />
+              <Route path="/admin/mcp" element={<Settings />} />
+              <Route path="/admin/ui" element={<Settings />} />
+              <Route path="/admin/audit" element={<AuditTrail />} />
+              <Route path="/admin/connectors" element={<Settings />} />
+
+              {/* === Canonical (non-persona) routes === */}
               <Route path="/my-products" element={<MyProducts />} />
               <Route path="/my-requests" element={<MyRequests />} />
               <Route path="/data-domains" element={<DataDomainsView />} />
@@ -113,9 +190,6 @@ export default function App() {
               <Route path="/search" element={<SearchView />} />
               <Route path="/search/llm" element={<SearchView />} />
               <Route path="/search/index" element={<SearchView />} />
-              <Route path="/search/concepts" element={<SearchView />} />
-              <Route path="/search/properties" element={<SearchView />} />
-              <Route path="/search/kg" element={<SearchView />} />
               <Route path="/about" element={<About />} />
               <Route path="/user-guide" element={<UserGuide />} />
               <Route path="/database-schema" element={<DatabaseSchema />} />
@@ -127,6 +201,15 @@ export default function App() {
               <Route path="/data-catalog" element={<DataCatalog />} />
               <Route path="/data-catalog/*" element={<DataCatalogDetails />} />
               <Route path="/audit" element={<AuditTrail />} />
+
+              {/* === Backward-compat redirects === */}
+              <Route path="/semantic-models/concepts" element={<Navigate to="/ontology/concepts" replace />} />
+              <Route path="/semantic-models/properties" element={<Navigate to="/ontology/properties" replace />} />
+              <Route path="/semantic-models/kg" element={<Navigate to="/ontology/kg" replace />} />
+              <Route path="/search/concepts" element={<Navigate to="/ontology/concepts" replace />} />
+              <Route path="/search/properties" element={<Navigate to="/ontology/properties" replace />} />
+              <Route path="/search/kg" element={<Navigate to="/ontology/kg" replace />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

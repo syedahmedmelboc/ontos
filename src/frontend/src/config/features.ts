@@ -255,9 +255,22 @@ import {
     },
   ];
   
-  // Helper function to get feature by path
-  export const getFeatureByPath = (path: string): FeatureConfig | undefined =>
-    features.find((feature) => feature.path === path);
+  // Helper function to get feature by path (supports persona-prefixed paths)
+  export const getFeatureByPath = (path: string): FeatureConfig | undefined => {
+    // Direct match first
+    const direct = features.find((f) => f.path === path);
+    if (direct) return direct;
+    // Strip persona prefix and try again
+    const personaPrefixes = ['/consumer', '/producer', '/owner', '/steward', '/governance', '/security', '/ontology', '/terms', '/admin'];
+    for (const prefix of personaPrefixes) {
+      if (path.startsWith(prefix + '/') || path === prefix) {
+        const stripped = path.slice(prefix.length) || '/';
+        const match = features.find((f) => f.path === stripped);
+        if (match) return match;
+      }
+    }
+    return undefined;
+  };
   
   // Helper function to get feature name by path (for breadcrumbs)
   export const getFeatureNameByPath = (pathSegment: string): string => {

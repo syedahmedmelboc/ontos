@@ -33,7 +33,12 @@
     "mcpSettings": "MCP Settings",
     "uiCustomization": "UI Customization",
     "audit": "Audit",
-    "connectors": "Connectors"
+    "connectors": "Connectors",
+    "securityFeatures": "Security Features",
+    "entitlements": "Entitlements",
+    "entitlementsSync": "Entitlements Sync",
+    "masterData": "Master Data Management",
+    "estateManager": "Estate Manager"
   },
   "personas": {
     "data_consumer": "Data Consumer",
@@ -41,6 +46,7 @@
     "data_product_owner": "Data Product Owner",
     "data_steward": "Data Steward",
     "data_governance_officer": "Data Governance Officer",
+    "security_officer": "Security Officer",
     "ontology_engineer": "Ontology Engineer",
     "business_term_owner": "Business Term Owner",
     "administrator": "Administrator"

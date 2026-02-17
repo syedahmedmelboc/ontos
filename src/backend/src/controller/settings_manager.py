@@ -1692,7 +1692,7 @@ class SettingsManager:
                     elif name == "Data Governance Officer":
                         default_personas = ["data_governance_officer"]
                     elif name == "Security Officer":
-                        default_personas = ["data_governance_officer"]
+                        default_personas = ["security_officer"]
                     else:
                         default_personas = ["data_consumer"]
                     self.app_role_repo.update(db=self._db, db_obj=role_db, obj_in={'allowed_personas': default_personas})

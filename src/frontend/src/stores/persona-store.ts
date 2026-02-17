@@ -25,6 +25,7 @@ const VALID_PERSONA_IDS = new Set<string>([
   'data_product_owner',
   'data_steward',
   'data_governance_officer',
+  'security_officer',
   'ontology_engineer',
   'business_term_owner',
   'administrator',

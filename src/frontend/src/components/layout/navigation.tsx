@@ -16,7 +16,7 @@ import { usePersonaStore } from '@/stores/persona-store';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
-import { Home as HomeIcon, Loader2, Layout } from 'lucide-react';
+import { Home as HomeIcon, Loader2 } from 'lucide-react';
 import type { PersonaId } from '@/types/settings';
 
 interface NavigationProps {
@@ -126,9 +126,9 @@ export function Navigation({ isCollapsed }: NavigationProps) {
           {usePersonaNav ? (
             /* Persona-based navigation */
             personaNavItems.map((item) => {
-              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path + '/'));
               const label = t(`settings:${item.labelKey}`, { defaultValue: item.id });
-              const Icon = item.path === '/' ? HomeIcon : Layout;
+              const Icon = item.icon;
               return isCollapsed ? (
                 <Tooltip key={item.id}>
                   <TooltipTrigger asChild>

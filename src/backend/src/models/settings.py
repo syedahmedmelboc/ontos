@@ -42,6 +42,7 @@ ALL_PERSONA_IDS = [
     "data_product_owner",
     "data_steward",
     "data_governance_officer",
+    "security_officer",
     "ontology_engineer",
     "business_term_owner",
     "administrator",

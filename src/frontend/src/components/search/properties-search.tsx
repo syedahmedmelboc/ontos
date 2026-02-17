@@ -77,7 +77,7 @@ export default function PropertiesSearch({
     if (currentIri) params.set('iri', currentIri);
 
     const queryString = params.toString();
-    const newUrl = queryString ? `/search/properties?${queryString}` : '/search/properties';
+    const newUrl = queryString ? `/ontology/properties?${queryString}` : '/ontology/properties';
     navigate(newUrl, { replace: true });
   };
 
