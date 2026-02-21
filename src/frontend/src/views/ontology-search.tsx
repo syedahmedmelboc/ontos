@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import KGSearch from '@/components/search/kg-search';
 import ConceptsSearch from '@/components/search/concepts-search';
 import PropertiesSearch from '@/components/search/properties-search';
@@ -10,16 +11,9 @@ type OntologyMode = 'concepts' | 'properties' | 'kg';
 
 function getModeFromPath(pathname: string): OntologyMode {
   const last = pathname.split('/').filter(Boolean).pop();
-  if (last === 'properties') return 'properties';
   if (last === 'kg') return 'kg';
   return 'concepts';
 }
-
-const MODE_LABELS: Record<OntologyMode, string> = {
-  concepts: 'Concepts',
-  properties: 'Properties',
-  kg: 'Knowledge Graph',
-};
 
 export default function OntologySearchView() {
   const { t } = useTranslation(['search', 'semantic-models', 'common']);
@@ -27,21 +21,25 @@ export default function OntologySearchView() {
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
 
-  const mode = getModeFromPath(location.pathname);
+  const pathMode = getModeFromPath(location.pathname);
+  const isKgMode = pathMode === 'kg';
+
+  const [searchMode, setSearchMode] = useState<'concepts' | 'properties'>('concepts');
+
   const params = new URLSearchParams(location.search);
 
   useEffect(() => {
     setStaticSegments([
       { label: 'Ontology', path: '/ontology' },
     ]);
-    setDynamicTitle(MODE_LABELS[mode]);
+    setDynamicTitle(isKgMode ? 'Knowledge Graph' : 'Search Concepts');
     return () => {
       setStaticSegments([]);
       setDynamicTitle(null);
     };
-  }, [setStaticSegments, setDynamicTitle, mode, t]);
+  }, [setStaticSegments, setDynamicTitle, isKgMode]);
 
-  if (mode === 'kg') {
+  if (isKgMode) {
     const kgPrefix = params.get('prefix') || '';
     const kgPath = params.get('path')?.split('|').filter(Boolean) || [];
     const kgSparql = params.get('sparql') || 'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10';
@@ -61,40 +59,37 @@ export default function OntologySearchView() {
     );
   }
 
-  if (mode === 'properties') {
-    const propertiesQuery = params.get('query') || '';
-    const propertiesIri = params.get('iri');
-    const initialProperty = propertiesIri ? {
-      value: propertiesIri,
-      label: propertiesIri.split('/').pop() || propertiesIri.split('#').pop() || propertiesIri,
-      type: 'property' as const,
-    } : null;
-
-    return (
-      <div className="py-4 space-y-4">
-        <PropertiesSearch
-          initialQuery={propertiesQuery}
-          initialSelectedProperty={initialProperty}
-        />
-      </div>
-    );
-  }
-
-  // Default: concepts
-  const conceptsQuery = params.get('query') || '';
-  const conceptsIri = params.get('iri');
-  const initialConcept = conceptsIri ? {
-    value: conceptsIri,
-    label: conceptsIri.split('/').pop() || conceptsIri.split('#').pop() || conceptsIri,
-    type: 'class' as const,
-  } : null;
+  const query = params.get('query') || '';
+  const iri = params.get('iri');
 
   return (
     <div className="py-4 space-y-4">
-      <ConceptsSearch
-        initialQuery={conceptsQuery}
-        initialSelectedConcept={initialConcept}
-      />
+      <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as 'concepts' | 'properties')}>
+        <TabsList>
+          <TabsTrigger value="concepts">Concepts</TabsTrigger>
+          <TabsTrigger value="properties">Properties</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {searchMode === 'concepts' ? (
+        <ConceptsSearch
+          initialQuery={query}
+          initialSelectedConcept={iri ? {
+            value: iri,
+            label: iri.split('/').pop() || iri.split('#').pop() || iri,
+            type: 'class' as const,
+          } : null}
+        />
+      ) : (
+        <PropertiesSearch
+          initialQuery={query}
+          initialSelectedProperty={iri ? {
+            value: iri,
+            label: iri.split('/').pop() || iri.split('#').pop() || iri,
+            type: 'property' as const,
+          } : null}
+        />
+      )}
     </div>
   );
 }

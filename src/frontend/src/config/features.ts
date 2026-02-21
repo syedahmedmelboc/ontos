@@ -242,6 +242,15 @@ import {
       maturity: 'alpha',
       showInLanding: true,
     },
+    {
+      id: 'access-grants',
+      name: 'Access Grants',
+      path: '/access-grants',
+      description: 'Request and manage time-limited access to data assets.',
+      icon: Lock,
+      maturity: 'ga',
+      showInLanding: false,
+    },
     // System - Application utilities and configuration
     {
       id: 'search',

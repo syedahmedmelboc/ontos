@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -11,12 +11,15 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Inbox, XCircle, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Inbox, XCircle, Loader2, ShieldCheck, Package, Bell } from 'lucide-react';
 import { RelativeDate } from '@/components/common/relative-date';
 import { ListViewSkeleton } from '@/components/common/list-view-skeleton';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
+import type { DataProduct } from '@/types/data-product';
 
 interface AccessGrantRequestItem {
   id: string;
@@ -39,55 +42,18 @@ interface MyRequestsResponse {
   total: number;
 }
 
-interface ApprovalSessionItem {
+type RequestRow = {
   id: string;
-  workflow_id: string;
-  entity_type: string;
-  entity_id: string;
-  entity_name?: string | null;
-  completion_action?: string | null;
+  entityName: string;
+  entityType: string;
+  entityId: string;
+  permissionLevel: string;
+  durationDays: number;
   status: string;
   created_at: string;
-  updated_at?: string | null;
-}
-
-interface MyApprovalSessionsResponse {
-  sessions: ApprovalSessionItem[];
-  total: number;
-}
-
-/** Unified row for table: access requests + approval/subscription sessions */
-type RequestRow =
-  | { source: 'access'; id: string; entityTypeKey: string; entityName: string; typeLabelKey: string; status: string; statusI18nKey: string; created_at: string; handled_at?: string | null; canCancel: boolean; accessReq: AccessGrantRequestItem }
-  | { source: 'approval'; id: string; entityTypeKey: string; entityName: string; typeLabelKey: string; status: string; statusI18nKey: string; created_at: string; handled_at?: string | null; canCancel: false; session: ApprovalSessionItem };
-
-function entityTypeToLabelKey(entityType: string): string {
-  const key = entityType?.toLowerCase?.() ?? '';
-  if (key === 'data_product') return 'myRequests.entityTypeDataProduct';
-  if (key === 'dataset') return 'myRequests.entityTypeDataset';
-  if (key === 'data_contract') return 'myRequests.entityTypeDataContract';
-  return 'myRequests.entityTypeDataProduct'; // fallback for unknown types
-}
-
-/** Path to entity detail page, or null if type not supported. */
-function getEntityDetailPath(entityType: string, entityId: string): string | null {
-  const key = entityType?.toLowerCase?.() ?? '';
-  if (!entityId) return null;
-  if (key === 'data_product') return `/data-products/${entityId}`;
-  if (key === 'dataset') return `/datasets/${entityId}`;
-  if (key === 'data_contract') return `/data-contracts/${entityId}`;
-  return null;
-}
-
-const STATUS_I18N: Record<string, string> = {
-  pending: 'myRequests.statusPending',
-  approved: 'myRequests.statusApproved',
-  denied: 'myRequests.statusDenied',
-  cancelled: 'myRequests.statusCancelled',
-  expired: 'myRequests.statusExpired',
-  in_progress: 'myRequests.statusInProgress',
-  completed: 'myRequests.statusCompleted',
-  abandoned: 'myRequests.statusAbandoned',
+  handled_at?: string | null;
+  canCancel: boolean;
+  raw: AccessGrantRequestItem;
 };
 
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -96,107 +62,102 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'des
   denied: 'destructive',
   cancelled: 'outline',
   expired: 'outline',
-  in_progress: 'secondary',
-  completed: 'default',
-  abandoned: 'outline',
 };
+
+function getEntityDetailPath(entityType: string, entityId: string, basePath: string): string | null {
+  const key = entityType?.toLowerCase?.() ?? '';
+  if (!entityId) return null;
+  const prefix = basePath.split('/').slice(0, 2).join('/');
+  if (key === 'data_product') return `${prefix}/my-products/${entityId}`;
+  if (key === 'data_contract') return `${prefix}/contracts/${entityId}`;
+  return null;
+}
+
+function entityTypeLabel(entityType: string): string {
+  const key = entityType?.toLowerCase?.() ?? '';
+  if (key === 'data_product') return 'Data Product';
+  if (key === 'dataset') return 'Dataset';
+  if (key === 'data_contract') return 'Data Contract';
+  return entityType;
+}
 
 export default function MyRequests() {
   const { t } = useTranslation('home');
   const api = useApi();
   const { toast } = useToast();
+  const { pathname } = useLocation();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
 
+  const [activeTab, setActiveTab] = useState('requests');
+
+  // Access requests state
   const [rows, setRows] = useState<RequestRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const mergeAndSort = useCallback((accessRequests: AccessGrantRequestItem[], sessions: ApprovalSessionItem[]): RequestRow[] => {
-    const accessRows: RequestRow[] = accessRequests.map((req) => ({
-      source: 'access' as const,
-      id: req.id,
-      entityTypeKey: entityTypeToLabelKey(req.entity_type),
-      entityName: req.entity_name || req.entity_id,
-      typeLabelKey: 'myRequests.typeAccess',
-      status: req.status,
-      statusI18nKey: STATUS_I18N[req.status] ?? req.status,
-      created_at: req.created_at,
-      handled_at: req.handled_at ?? undefined,
-      canCancel: req.status === 'pending',
-      accessReq: req,
-    }));
-    const approvalRows: RequestRow[] = sessions.map((s) => ({
-      source: 'approval' as const,
-      id: s.id,
-      entityTypeKey: entityTypeToLabelKey(s.entity_type),
-      entityName: s.entity_name ?? s.entity_id,
-      typeLabelKey: s.completion_action === 'subscribe' ? 'myRequests.typeSubscription' : 'myRequests.typeApproval',
-      status: s.status,
-      statusI18nKey: STATUS_I18N[s.status] ?? s.status,
-      created_at: s.created_at,
-      handled_at: s.status !== 'in_progress' ? (s.updated_at ?? s.created_at) : undefined,
-      canCancel: false,
-      session: s,
-    }));
-    const merged = [...accessRows, ...approvalRows];
-    merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return merged;
-  }, []);
+  // Subscriptions state
+  const [subscriptions, setSubscriptions] = useState<DataProduct[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
+  const [subscriptionsError, setSubscriptionsError] = useState<string | null>(null);
 
-  // Fetch access requests only. (Approval/subscription sessions are not shown in Requests; completed agreements may be added later.)
   useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const accessResp = await fetch('/api/access-grants/my-requests');
-        if (cancelled) return;
-        if (!accessResp.ok) {
-          const errText = await accessResp.text();
-          setError(errText || `HTTP ${accessResp.status}`);
-          setRows([]);
-          return;
-        }
-        const accessData: MyRequestsResponse = await accessResp.json();
-        if (cancelled) return;
-        setRows(mergeAndSort(accessData?.requests ?? [], []));
-      } catch (e) {
-        if (cancelled) return;
-        console.warn('Failed to fetch my requests:', e);
-        setError(e instanceof Error ? e.message : 'Failed to load');
-        setRows([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [mergeAndSort]);
+    setStaticSegments([{ label: 'My Requests' }]);
+    return () => setStaticSegments([]);
+  }, [setStaticSegments]);
 
   const loadRequests = useCallback(async () => {
+    setRequestsLoading(true);
+    setRequestsError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const accessResp = await api.get<MyRequestsResponse>('/api/access-grants/my-requests');
-      setRows(mergeAndSort(accessResp.data?.requests ?? [], []));
+      const resp = await fetch('/api/access-grants/my-requests');
+      if (!resp.ok) {
+        setRequestsError(`HTTP ${resp.status}`);
+        setRows([]);
+        return;
+      }
+      const data: MyRequestsResponse = await resp.json();
+      const mapped: RequestRow[] = (data?.requests ?? []).map((req) => ({
+        id: req.id,
+        entityName: req.entity_name || req.entity_id,
+        entityType: req.entity_type,
+        entityId: req.entity_id,
+        permissionLevel: req.permission_level,
+        durationDays: req.requested_duration_days,
+        status: req.status,
+        created_at: req.created_at,
+        handled_at: req.handled_at,
+        canCancel: req.status === 'pending',
+        raw: req,
+      }));
+      mapped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRows(mapped);
     } catch (e) {
-      console.warn('Failed to fetch my requests:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load');
+      console.warn('Failed to fetch access requests:', e);
+      setRequestsError(e instanceof Error ? e.message : 'Failed to load');
       setRows([]);
     } finally {
-      setLoading(false);
+      setRequestsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mergeAndSort]);
+  }, []);
 
-  useEffect(() => {
-    setStaticSegments([{ label: t('myRequests.title'), path: '/my-requests' }]);
-    return () => setStaticSegments([]);
-    // Intentionally omit t to avoid re-running when i18n reference changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setStaticSegments]);
+  const loadSubscriptions = useCallback(async () => {
+    setSubscriptionsLoading(true);
+    setSubscriptionsError(null);
+    try {
+      const data = await api.get('/api/data-products/my-subscriptions');
+      setSubscriptions(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.warn('Failed to fetch subscriptions:', e);
+      setSubscriptionsError(e instanceof Error ? e.message : 'Failed to load');
+      setSubscriptions([]);
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => { loadRequests(); }, [loadRequests]);
+  useEffect(() => { loadSubscriptions(); }, [loadSubscriptions]);
 
   const handleCancel = async (requestId: string) => {
     try {
@@ -215,43 +176,7 @@ export default function MyRequests() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <div>
-          <div className="h-8 w-48 rounded-md bg-muted animate-pulse mb-2" />
-          <div className="h-4 w-96 rounded-md bg-muted animate-pulse" />
-        </div>
-        <ListViewSkeleton columns={5} rows={6} toolbarButtons={0} showToolbar={false} showPagination={false} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <p className="text-destructive">{error}</p>
-        <Button variant="outline" onClick={loadRequests}>
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
-  if (rows.length === 0) {
-    return (
-      <div className="flex flex-col gap-4 p-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t('myRequests.title')}</h1>
-          <p className="text-muted-foreground mt-1">{t('myRequests.description')}</p>
-        </div>
-        <div className="border rounded-lg flex flex-col items-center justify-center py-12">
-          <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground text-center">{t('myRequests.empty')}</p>
-        </div>
-      </div>
-    );
-  }
+  const pendingCount = rows.filter((r) => r.status === 'pending').length;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -259,83 +184,206 @@ export default function MyRequests() {
         <h1 className="text-2xl font-semibold tracking-tight">{t('myRequests.title')}</h1>
         <p className="text-muted-foreground mt-1">{t('myRequests.description')}</p>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('myRequests.type')}</TableHead>
-              <TableHead>{t('myRequests.entityType')}</TableHead>
-              <TableHead>{t('myRequests.name')}</TableHead>
-              <TableHead>{t('myRequests.status')}</TableHead>
-              <TableHead>{t('myRequests.requestedAt')}</TableHead>
-              <TableHead>{t('myRequests.handledAt')}</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => {
-              const variant = STATUS_VARIANTS[row.status] ?? 'outline';
-              const nameDetail = row.source === 'access' ? ` (${row.accessReq.permission_level}, ${row.accessReq.requested_duration_days}d)` : '';
-              const entityId = row.source === 'access' ? row.accessReq.entity_id : row.session.entity_id;
-              const entityType = row.source === 'access' ? row.accessReq.entity_type : row.session.entity_type;
-              const detailPath = getEntityDetailPath(entityType, entityId);
-              return (
-                <TableRow key={`${row.source}-${row.id}`}>
-                  <TableCell>
-                    <Badge variant="outline" className="font-normal">{t(row.typeLabelKey)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {t(row.entityTypeKey)}
-                  </TableCell>
-                  <TableCell>
-                    {detailPath ? (
-                      <Link to={detailPath} className="font-medium text-primary hover:underline">
-                        {row.entityName}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{row.entityName}</span>
-                    )}
-                    {row.source === 'access' && nameDetail && (
-                      <span className="text-muted-foreground text-sm ml-1">{nameDetail}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={variant}>{t(row.statusI18nKey)}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <RelativeDate date={row.created_at} />
-                  </TableCell>
-                  <TableCell>
-                    {row.handled_at ? (
-                      <RelativeDate date={row.handled_at} />
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {row.canCancel && row.source === 'access' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        onClick={() => handleCancel(row.id)}
-                        disabled={cancellingId === row.id}
-                        title={t('myRequests.cancel')}
-                      >
-                        {cancellingId === row.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-amber-500/10 p-2.5">
+                <ShieldCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Requests</p>
+                <p className="text-2xl font-bold">{pendingCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-500/10 p-2.5">
+                <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Requests</p>
+                <p className="text-2xl font-bold">{rows.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-green-500/10 p-2.5">
+                <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                <p className="text-2xl font-bold">{subscriptions.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="requests">
+            Access Requests
+            {pendingCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">{pendingCount}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions">
+            My Subscriptions
+            {subscriptions.length > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">{subscriptions.length}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="requests" className="mt-4">
+          {requestsLoading ? (
+            <ListViewSkeleton columns={6} rows={5} toolbarButtons={0} showToolbar={false} showPagination={false} />
+          ) : requestsError ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-destructive">{requestsError}</p>
+              <Button variant="outline" onClick={loadRequests}>Retry</Button>
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="border rounded-lg flex flex-col items-center justify-center py-12">
+              <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">{t('myRequests.empty')}</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset Type</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Permission</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Requested</TableHead>
+                    <TableHead>Resolved</TableHead>
+                    <TableHead className="w-[80px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => {
+                    const variant = STATUS_VARIANTS[row.status] ?? 'outline';
+                    const detailPath = getEntityDetailPath(row.entityType, row.entityId, pathname);
+                    return (
+                      <TableRow key={row.id}>
+                        <TableCell className="text-muted-foreground">
+                          {entityTypeLabel(row.entityType)}
+                        </TableCell>
+                        <TableCell>
+                          {detailPath ? (
+                            <Link to={detailPath} className="font-medium text-primary hover:underline">
+                              {row.entityName}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">{row.entityName}</span>
+                          )}
+                          <span className="text-muted-foreground text-sm ml-1">
+                            ({row.permissionLevel}, {row.durationDays}d)
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{row.permissionLevel}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={variant}>{row.status}</Badge>
+                        </TableCell>
+                        <TableCell><RelativeDate date={row.created_at} /></TableCell>
+                        <TableCell>
+                          {row.handled_at ? <RelativeDate date={row.handled_at} /> : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          {row.canCancel && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={() => handleCancel(row.id)}
+                              disabled={cancellingId === row.id}
+                              title="Cancel"
+                            >
+                              {cancellingId === row.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="subscriptions" className="mt-4">
+          {subscriptionsLoading ? (
+            <ListViewSkeleton columns={4} rows={4} toolbarButtons={0} showToolbar={false} showPagination={false} />
+          ) : subscriptionsError ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-destructive">{subscriptionsError}</p>
+              <Button variant="outline" onClick={loadSubscriptions}>Retry</Button>
+            </div>
+          ) : subscriptions.length === 0 ? (
+            <div className="border rounded-lg flex flex-col items-center justify-center py-12">
+              <Package className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">You haven't subscribed to any data products yet.</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Domain</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Version</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptions.map((product) => {
+                    const prefix = pathname.split('/').slice(0, 2).join('/');
+                    const detailPath = `${prefix}/my-products/${product.id}`;
+                    return (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <Link to={detailPath} className="font-medium text-primary hover:underline">
+                            {product.name ?? product.id}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {product.domain ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                            {product.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {product.version ?? '—'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

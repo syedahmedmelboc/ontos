@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './components/theme';
 import Layout from './components/layout/layout';
 import { TooltipProvider } from './components/ui/tooltip';
@@ -8,6 +8,8 @@ import { useUserStore } from './stores/user-store';
 import { usePermissions } from './stores/permissions-store';
 import { useNotificationsStore } from './stores/notifications-store';
 import { usePersonaStore } from './stores/persona-store';
+import { PERSONA_BASE_PATHS } from './config/persona-nav';
+import type { PersonaId } from './types/settings';
 import './i18n/config'; // Initialize i18n
 
 // Import views
@@ -69,6 +71,27 @@ import AssetExplorerView from './views/asset-explorer';
 import AssetDetailView from './views/asset-detail';
 import BusinessRolesView from './views/business-roles';
 import BusinessOwnersView from './views/business-owners';
+import OwnerConsumersView from './views/owner-consumers';
+
+/** Syncs the URL prefix to the persona store so direct navigation works. */
+function PersonaUrlSync() {
+  const { pathname } = useLocation();
+  const { currentPersona, setCurrentPersona, allowedPersonas } = usePersonaStore();
+
+  useEffect(() => {
+    const entry = (Object.entries(PERSONA_BASE_PATHS) as [PersonaId, string][]).find(
+      ([, prefix]) => pathname === prefix || pathname.startsWith(prefix + '/')
+    );
+    if (entry) {
+      const [personaId] = entry;
+      if (personaId !== currentPersona && allowedPersonas.includes(personaId)) {
+        setCurrentPersona(personaId);
+      }
+    }
+  }, [pathname, currentPersona, setCurrentPersona, allowedPersonas]);
+
+  return null;
+}
 
 export default function App() {
   const fetchUserInfo = useUserStore((state: any) => state.fetchUserInfo);
@@ -99,6 +122,7 @@ export default function App() {
           v7_relativeSplatPath: true,
           v7_startTransition: true 
         }}>
+          <PersonaUrlSync />
           <Layout>
             <Routes>
               {/* Global home */}
@@ -129,7 +153,7 @@ export default function App() {
               <Route path="/owner/products/:productId" element={<DataProductDetails />} />
               <Route path="/owner/contracts" element={<DataContracts />} />
               <Route path="/owner/contracts/:contractId" element={<DataContractDetails />} />
-              <Route path="/owner/consumers" element={<DataProducts />} />
+              <Route path="/owner/consumers" element={<OwnerConsumersView />} />
               <Route path="/owner/health" element={<Compliance />} />
               <Route path="/owner/health/policies/:policyId" element={<CompliancePolicyDetails />} />
               <Route path="/owner/health/runs/:runId" element={<ComplianceRunDetails />} />
@@ -176,9 +200,7 @@ export default function App() {
               <Route path="/ontology/domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/ontology/collections" element={<CollectionsView />} />
               <Route path="/ontology/glossaries" element={<BusinessTermsView />} />
-              <Route path="/ontology/concepts" element={<OntologySearchView />} />
-              <Route path="/ontology/properties" element={<OntologySearchView />} />
-              <Route path="/ontology/ontologies" element={<CollectionsView />} />
+              <Route path="/ontology/search" element={<OntologySearchView />} />
               <Route path="/ontology/kg" element={<OntologySearchView />} />
               <Route path="/ontology/semantic-models-settings" element={<SettingsSemanticModelsView />} />
 
@@ -201,7 +223,6 @@ export default function App() {
               <Route path="/admin/search" element={<SettingsSearchView />} />
               <Route path="/admin/mcp" element={<SettingsMcpView />} />
               <Route path="/admin/ui" element={<SettingsUiView />} />
-              <Route path="/admin/connectors" element={<SettingsGeneralView />} />
               <Route path="/admin/audit" element={<AuditTrail />} />
               <Route path="/admin/about" element={<About />} />
 

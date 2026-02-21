@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SearchBar from '@/components/ui/search-bar';
 import { Card, CardContent, CardTitle, CardHeader, CardDescription } from '@/components/ui/card';
@@ -18,9 +18,18 @@ import RequestRoleSection from '@/components/home/request-role-section';
 import QuickActions from '@/components/home/quick-actions';
 import RecentActivity from '@/components/home/recent-activity';
 import MarketplaceView from '@/components/home/marketplace-view';
+import ProducerHome from '@/components/home/producer-home';
+import OwnerHome from '@/components/home/owner-home';
+import StewardHome from '@/components/home/steward-home';
+import GovernanceHome from '@/components/home/governance-home';
+import SecurityHome from '@/components/home/security-home';
+import TermOwnerHome from '@/components/home/term-owner-home';
+import AdminHome from '@/components/home/admin-home';
 import { useUserStore } from '@/stores/user-store';
 import { useViewModeStore, ViewMode } from '@/stores/view-mode-store';
 import { usePersonaStore } from '@/stores/persona-store';
+import { PERSONA_BASE_PATHS } from '@/config/persona-nav';
+import type { PersonaId } from '@/types/settings';
 
 interface Stats {
   dataContracts: { count: number; loading: boolean; error: string | null };
@@ -72,7 +81,12 @@ export default function Home() {
   const allowedMaturities = useFeatureVisibilityStore((state) => state.allowedMaturities);
   const { permissions, isLoading: permissionsLoading, hasPermission, requestableRoles, appliedRoleId } = usePermissions();
 
+  const personaRef = usePersonaStore.getState().currentPersona;
+  const hasPersonaDashboard = !!personaRef && personaRef !== 'data_consumer';
+
   useEffect(() => {
+    if (hasPersonaDashboard) return;
+
     fetch('/api/data-products')
       .then(response => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -117,10 +131,7 @@ export default function Home() {
         return response.json();
         })
       .then(data => {
-        // Count all loaded semantic models
         const modelsCount = data?.stats?.taxonomies?.length || 0;
-
-        // Calculate total terms (concepts + properties)
         const totalTerms = (data?.stats?.total_concepts || 0) + (data?.stats?.total_properties || 0);
 
         setStats(prev => ({
@@ -230,7 +241,7 @@ export default function Home() {
         setComplianceError(error.message);
         setComplianceLoading(false);
       });
-  }, []);
+  }, [hasPersonaDashboard]);
 
   const baseSummaryTiles = useMemo(() => [
     {
@@ -359,24 +370,48 @@ export default function Home() {
     });
   }, [permissions, permissionsLoading]);
 
-  // Persona-based home: when user has a selected persona, show that persona's home
   const currentPersona = usePersonaStore((state) => state.currentPersona);
   const hasPersona = !!currentPersona;
   const isConsumerPersona = currentPersona === 'data_consumer';
-  // Fallback when no persona: use view mode (consumer vs management)
   const effectiveViewMode: ViewMode = hasAnyAccess && !hasManagementAccess ? 'consumer' : viewMode;
   const showMarketplace = hasPersona ? isConsumerPersona : (effectiveViewMode === 'consumer' && hasAnyAccess);
-  const showManagementHome = hasPersona ? !isConsumerPersona : (effectiveViewMode === 'management');
+
+  const PERSONA_HOME_MAP: Partial<Record<PersonaId, React.ComponentType>> = {
+    data_producer: ProducerHome,
+    data_product_owner: OwnerHome,
+    data_steward: StewardHome,
+    data_governance_officer: GovernanceHome,
+    security_officer: SecurityHome,
+    business_term_owner: TermOwnerHome,
+    administrator: AdminHome,
+  };
+
+  const PersonaHomeComponent = currentPersona ? PERSONA_HOME_MAP[currentPersona] : null;
+  const showPersonaDashboard = hasPersona && !isConsumerPersona && !!PersonaHomeComponent;
+  const showGenericManagement = !showMarketplace && !showPersonaDashboard && (hasPersona ? !isConsumerPersona : effectiveViewMode === 'management');
+
+  const { pathname } = useLocation();
+
+  // Redirect bare "/" to the current persona's home path
+  if (pathname === '/' && currentPersona && PERSONA_BASE_PATHS[currentPersona]) {
+    return <Navigate to={PERSONA_BASE_PATHS[currentPersona]} replace />;
+  }
+
+  if (showPersonaDashboard && PersonaHomeComponent) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PersonaHomeComponent />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Data Consumer persona (or legacy consumer view): Marketplace */}
       {showMarketplace && hasAnyAccess && (
         <MarketplaceView />
       )}
 
-      {/* Other personas / Management View: dedicated home with tiles and sections */}
-      {showManagementHome && (
+      {showGenericManagement && (
         <>
           <div className="max-w-2xl mx-auto text-center mb-8">
             <div className="flex items-center justify-center mb-4">
@@ -396,7 +431,6 @@ export default function Home() {
             </div>
           </div>
 
-      {/* Only show Overview when user has access */}
       {hasAnyAccess && (
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">{t('home:overview.title')}</h2>
@@ -516,7 +550,6 @@ export default function Home() {
          </div>
        )}
 
-          {/* Role-based main sections - respect role configuration order, only show when user has access */}
           {hasAnyAccess && orderedSections.map(section => (
             section === HomeSection.REQUIRED_ACTIONS ? (
               <RequiredActionsSection key={section} />
@@ -527,7 +560,6 @@ export default function Home() {
             )
           ))}
 
-          {/* Quick Actions and Recent Activity - only show when user has access */}
           {hasAnyAccess && (
             <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <QuickActions />
