@@ -13,6 +13,7 @@ import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { useToast } from '@/hooks/use-toast'
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel'
+import { OwnershipPanel } from '@/components/common/ownership-panel'
 import { CommentSidebar } from '@/components/comments'
 import ConceptSelectDialog from '@/components/semantic/concept-select-dialog'
 import LinkedConceptChips from '@/components/semantic/linked-concept-chips'
@@ -2871,6 +2872,11 @@ export default function DataContractDetails() {
           )}
         </CardContent>
       </Card>
+      )}
+
+      {/* Ownership Panel */}
+      {shouldShowSection('metadata-panel') && contract.id && (
+        <OwnershipPanel objectType="data_contract" objectId={contract.id} canAssign={canEditInPlace} className="mb-6" />
       )}
 
       {/* Metadata Panel */}

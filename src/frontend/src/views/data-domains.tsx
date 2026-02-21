@@ -16,7 +16,7 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from "@/components/ui/badge";
+
 import TagChip from '@/components/ui/tag-chip';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
@@ -214,26 +214,6 @@ export default function DataDomainsView() {
           {row.getValue("description") || '-'}
         </div>
       ),
-    },
-    {
-      accessorKey: "owner",
-      header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          {t('table.owners')}
-          <ChevronDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const owners = row.original.owner;
-        if (!owners || owners.length === 0) return '-' ;
-        return (
-            <div className="flex flex-col space-y-0.5">
-                {owners.map((owner, index) => (
-                    <Badge key={index} variant="outline" className="text-xs truncate w-fit">{owner}</Badge>
-                ))}
-            </div>
-        );
-      }
     },
     {
       accessorKey: "tags",

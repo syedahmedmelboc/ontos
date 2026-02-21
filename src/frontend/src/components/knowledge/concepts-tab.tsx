@@ -26,6 +26,7 @@ import type {
 } from '@/types/ontology';
 import { NodeLinksPanel } from '@/components/knowledge/node-links-panel';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
+import { OwnershipPanel } from '@/components/common/ownership-panel';
 import { resolveLabel, resolveComment } from '@/lib/ontology-utils';
 
 interface ConceptsTabProps {
@@ -572,27 +573,13 @@ export const ConceptsTab: React.FC<ConceptsTabProps> = ({
                 selectedLanguage={selectedLanguage}
               />
               
-              {/* Owners */}
-              {selectedConcept.owners && selectedConcept.owners.length > 0 && (
-                <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {t('semantic-models:fields.businessOwners')}
-                  </h3>
-                  <div className="space-y-2">
-                    {selectedConcept.owners.map((owner) => (
-                      <div
-                        key={owner.user_uri}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span>{owner.user_uri?.replace('urn:user:', '')}</span>
-                        <Badge variant="outline" className="text-xs">{owner.role}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
+              {/* Ownership Panel */}
+              <OwnershipPanel
+                objectType="business_term"
+                objectId={selectedConcept.iri}
+                canAssign={isConceptEditable(selectedConcept)}
+              />
+
               {/* Source Info */}
               <div className="text-sm text-muted-foreground border-t pt-4">
                 <p>Source: {selectedConcept.source_context}</p>

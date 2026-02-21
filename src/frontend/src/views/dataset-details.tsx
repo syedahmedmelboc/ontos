@@ -63,6 +63,7 @@ import DatasetInstanceFormDialog from '@/components/datasets/dataset-instance-fo
 import CreateContractFromDatasetDialog from '@/components/datasets/create-contract-from-dataset-dialog';
 import DatasetLookupDialog from '@/components/data-contracts/dataset-lookup-dialog';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
+import { OwnershipPanel } from '@/components/common/ownership-panel';
 import { RatingPanel } from '@/components/ratings';
 import AccessGrantsPanel from '@/components/access/access-grants-panel';
 import TagChip from '@/components/ui/tag-chip';
@@ -1055,6 +1056,11 @@ export default function DatasetDetails() {
           canManage={canDirectStatusChange}
           showPendingRequests={canDirectStatusChange}
         />
+      )}
+
+      {/* Ownership Panel */}
+      {datasetId && (
+        <OwnershipPanel objectType="dataset" objectId={datasetId} canAssign={canDirectStatusChange} className="mb-6" />
       )}
 
       {/* Metadata Panel - Rich texts, links, documents */}

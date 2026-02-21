@@ -29,6 +29,7 @@ import ConceptSelectDialog from '@/components/semantic/concept-select-dialog';
 import LinkedConceptChips from '@/components/semantic/linked-concept-chips';
 import type { EntitySemanticLink } from '@/types/semantic-link';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
+import { OwnershipPanel } from '@/components/common/ownership-panel';
 import { CommentSidebar } from '@/components/comments';
 import { RatingPanel } from '@/components/ratings';
 import AccessGrantsPanel from '@/components/access/access-grants-panel';
@@ -1557,6 +1558,9 @@ export default function DataProductDetails() {
           showPendingRequests={canModify}
         />
       )}
+
+      {/* Ownership Panel */}
+      <OwnershipPanel objectType="data_product" objectId={productId!} canAssign={canModify} className="mb-6" />
 
       {/* Metadata Panel */}
       <EntityMetadataPanel entityId={productId!} entityType="data_product" />

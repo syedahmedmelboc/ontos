@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 // Label - unused
 // import { Label } from '@/components/ui/label';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
+import { OwnershipPanel } from '@/components/common/ownership-panel';
 // Preview handled in EntityMetadataPanel
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -608,14 +609,6 @@ export default function DataDomainDetailsView() {
             )}
              <InfoItem label="Children Count" value={domain.children_count?.toString() ?? '0'} icon={<ListTree />} />
 
-            <InfoItem label="Owners" icon={<Users />}>
-              {domain.owner && domain.owner.length > 0 ? (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {domain.owner.map((o, i) => <Badge key={i} variant="outline">{o}</Badge>)}
-                </div>
-              ) : t('common:states.notAssigned')}
-            </InfoItem>
-
             <InfoItem label="Tags" icon={<Tag />}>
               {domain.tags && domain.tags.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-1">
@@ -751,6 +744,9 @@ export default function DataDomainDetailsView() {
           <LinkedAssetsView assets={linkedAssets} />
         </CardContent>
       </Card>
+
+      {/* Ownership Panel */}
+      <OwnershipPanel objectType="data_domain" objectId={domainId!} canAssign className="mb-6" />
 
       {/* Metadata Panel - Last Section */}
       <EntityMetadataPanel entityId={domainId!} entityType={entityType} />
