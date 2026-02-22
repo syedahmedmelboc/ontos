@@ -350,7 +350,7 @@ def delete_asset(
     success = False
     details = {"params": {"asset_id": str(asset_id)}}
     try:
-        result = manager.delete_asset(db=db, asset_id=asset_id)
+        result = manager.delete_asset(db=db, asset_id=asset_id, current_user_id=current_user)
         success = True
         return result
     except NotFoundError as e:

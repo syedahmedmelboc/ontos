@@ -13,6 +13,7 @@ from src.models.assets import (
 from src.db_models.assets import AssetTypeDb, AssetDb, AssetRelationshipDb
 from src.common.errors import ConflictError, NotFoundError, ValidationError
 from src.common.logging import get_logger
+from src.controller.change_log_manager import change_log_manager
 
 logger = get_logger(__name__)
 
@@ -186,6 +187,17 @@ class AssetsManager:
             # Reload with relationships
             db_asset = self._asset_repo.get_with_relationships(db, db_asset.id)
             logger.info(f"Created asset '{db_asset.name}' (id: {db_asset.id})")
+            try:
+                change_log_manager.log_change(
+                    db,
+                    entity_type="asset",
+                    entity_id=str(db_asset.id),
+                    action="created",
+                    username=current_user_id,
+                    details_json=f'{{"name": "{db_asset.name}", "asset_type": "{db_type.name}"}}',
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log change for asset creation: {e}")
             return self._asset_to_read(db_asset)
         except IntegrityError as e:
             db.rollback()
@@ -233,6 +245,17 @@ class AssetsManager:
             db.refresh(updated)
             updated = self._asset_repo.get_with_relationships(db, updated.id)
             logger.info(f"Updated asset '{updated.name}' (id: {asset_id})")
+            try:
+                change_log_manager.log_change_with_details(
+                    db,
+                    entity_type="asset",
+                    entity_id=str(asset_id),
+                    action="updated",
+                    username=current_user_id,
+                    details={"name": updated.name, "changed_fields": list(update_data.keys())},
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log change for asset update: {e}")
             return self._asset_to_read(updated)
         except IntegrityError as e:
             db.rollback()
@@ -240,7 +263,7 @@ class AssetsManager:
                 raise ConflictError("Asset identity conflict.")
             raise
 
-    def delete_asset(self, db: Session, *, asset_id: UUID) -> AssetRead:
+    def delete_asset(self, db: Session, *, asset_id: UUID, current_user_id: str = "system") -> AssetRead:
         db_asset = self._asset_repo.get_with_relationships(db, asset_id)
         if not db_asset:
             raise NotFoundError(f"Asset '{asset_id}' not found.")
@@ -248,6 +271,17 @@ class AssetsManager:
         read = self._asset_to_read(db_asset)
         self._asset_repo.remove(db=db, id=asset_id)
         logger.info(f"Deleted asset '{read.name}' (id: {asset_id})")
+        try:
+            change_log_manager.log_change_with_details(
+                db,
+                entity_type="asset",
+                entity_id=str(asset_id),
+                action="deleted",
+                username=current_user_id,
+                details={"name": read.name, "asset_type": read.asset_type_name},
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log change for asset deletion: {e}")
         return read
 
     # --- Relationship operations ---

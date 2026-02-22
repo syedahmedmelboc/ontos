@@ -42,6 +42,7 @@ import LinkContractToPortDialog from '@/components/data-products/link-contract-t
 import VersioningRecommendationDialog from '@/components/common/versioning-recommendation-dialog';
 import { Link2, Unlink } from 'lucide-react';
 import { ProductHierarchyPanel } from '@/components/data-products/product-hierarchy-panel';
+import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel';
 
 /**
  * ODPS v1.0.0 Data Product Details View
@@ -1567,6 +1568,14 @@ export default function DataProductDetails() {
 
       {/* Ownership Panel */}
       <OwnershipPanel objectType="data_product" objectId={productId!} canAssign={canModify} className="mb-6" />
+
+      {/* Entity Relationships Panel */}
+      <EntityRelationshipPanel
+        entityType="DataProduct"
+        entityId={productId!}
+        title="Related Entities"
+        canEdit={canModify}
+      />
 
       {/* Metadata Panel */}
       <EntityMetadataPanel entityId={productId!} entityType="data_product" />

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Box, Loader2, AlertCircle, Pencil, Trash2,
+  ArrowLeft, Loader2, AlertCircle, Pencil, Trash2,
   MapPin, Globe, Calendar, User, Tag, FileJson, Network,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,11 @@ import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { RelativeDate } from '@/components/common/relative-date';
 import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel';
+import { OwnershipPanel } from '@/components/common/ownership-panel';
+import { CommentSidebar } from '@/components/comments';
+import { RatingPanel } from '@/components/ratings';
+import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
+import EntityCostsPanel from '@/components/costs/entity-costs-panel';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
@@ -91,6 +96,7 @@ export default function AssetDetailView() {
   const [error, setError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [ontologyIri, setOntologyIri] = useState<string | null>(null);
 
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
@@ -224,6 +230,13 @@ export default function AssetDetailView() {
         </div>
 
         <div className="flex items-center gap-2">
+          <CommentSidebar
+            entityType="asset"
+            entityId={assetId!}
+            isOpen={isCommentSidebarOpen}
+            onToggle={() => setIsCommentSidebarOpen(!isCommentSidebarOpen)}
+            className="h-8"
+          />
           <Button
             variant="outline"
             size="sm"
@@ -349,6 +362,24 @@ export default function AssetDetailView() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Ownership Panel */}
+      <OwnershipPanel objectType="asset" objectId={assetId!} canAssign={canWrite} className="mb-6" />
+
+      {/* Metadata Panel */}
+      <EntityMetadataPanel entityId={assetId!} entityType="asset" />
+
+      {/* Ratings Panel */}
+      <RatingPanel
+        entityType="asset"
+        entityId={assetId!}
+        title="Ratings & Reviews"
+        showDistribution
+        allowSubmit
+      />
+
+      {/* Costs Panel */}
+      <EntityCostsPanel entityId={assetId!} entityType="asset" />
 
       {/* Edit dialog */}
       {asset && (

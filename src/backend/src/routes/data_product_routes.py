@@ -559,6 +559,53 @@ async def get_product_hierarchy(
         )
 
 
+@router.get('/data-products/{product_id}/odps/export')
+async def export_odps(
+    product_id: str,
+    request: Request,
+    db: DBSessionDep,
+    audit_manager: AuditManagerDep,
+    current_user: AuditCurrentUserDep,
+    background_tasks: BackgroundTasks,
+    manager: DataProductsManager = Depends(get_data_products_manager),
+    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_ONLY)),
+):
+    """Export a Data Product as ODPS v1.0.0 YAML, including entity relationship-based datasets."""
+    from fastapi.responses import Response
+    success = False
+    details = {"product_id": product_id, "action": "export_odps"}
+    try:
+        odps = manager.build_odps_export(product_id, db=db)
+        yaml_content = yaml.dump(odps, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+        raw_name = (odps.get("name") or "product").lower().replace(" ", "_")
+        safe_filename = f"{raw_name}-odps.yaml"
+        success = True
+        return Response(
+            content=yaml_content,
+            media_type="application/x-yaml",
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_filename}"',
+                "Content-Type": "application/x-yaml; charset=utf-8",
+            },
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Failed to export ODPS for product {product_id}")
+        raise HTTPException(status_code=500, detail="Failed to export ODPS")
+    finally:
+        background_tasks.add_task(
+            audit_manager.log_action_background,
+            username=current_user.username,
+            ip_address=request.client.host if request.client else None,
+            feature=DATA_PRODUCTS_FEATURE_ID,
+            action="EXPORT_ODPS",
+            success=success,
+            details=details,
+        )
+
+
 @router.post('/data-products/{product_id}/datasets')
 async def link_dataset_to_product(
     product_id: str,

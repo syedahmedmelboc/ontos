@@ -2506,6 +2506,128 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
             "datasets": datasets_out,
         }
 
+    def build_odps_export(
+        self,
+        product_id: str,
+        db: Optional[Session] = None,
+    ) -> Dict[str, Any]:
+        """Build a full ODPS v1.0.0-compatible YAML export of a Data Product.
+
+        Includes the standard ODPS structure plus entity relationship-based
+        dataset hierarchy as an extension section.
+        """
+        session = db or self._db
+        product = self.get_product(product_id)
+        if not product:
+            raise ValueError(f"Product {product_id} not found")
+
+        odps: Dict[str, Any] = {
+            "kind": product.kind or "DataProduct",
+            "apiVersion": product.api_version or "v1.0.0",
+            "id": product.id,
+            "status": product.status,
+        }
+
+        if product.name:
+            odps["name"] = product.name
+        if product.version:
+            odps["version"] = product.version
+        if product.domain:
+            odps["domain"] = product.domain
+        if product.tenant:
+            odps["tenant"] = product.tenant
+
+        if product.description:
+            desc: Dict[str, Any] = {}
+            if product.description.purpose:
+                desc["purpose"] = product.description.purpose
+            if product.description.usage:
+                desc["usage"] = product.description.usage
+            if product.description.limitations:
+                desc["limitations"] = product.description.limitations
+            if desc:
+                odps["description"] = desc
+
+        if product.input_ports:
+            odps["inputPorts"] = [
+                {k: v for k, v in {
+                    "name": p.name, "version": p.version,
+                    "contractId": p.contract_id,
+                }.items() if v}
+                for p in product.input_ports
+            ]
+
+        if product.output_ports:
+            odps["outputPorts"] = [
+                {k: v for k, v in {
+                    "name": p.name, "version": p.version,
+                    "contractId": p.contract_id,
+                    "status": p.status,
+                }.items() if v}
+                for p in product.output_ports
+            ]
+
+        if product.support_channels:
+            odps["support"] = [
+                {k: v for k, v in {
+                    "channel": s.channel, "url": s.url,
+                    "tool": s.tool, "scope": s.scope,
+                }.items() if v}
+                for s in product.support_channels
+            ]
+
+        if product.team and product.team.members:
+            odps["team"] = {
+                "name": product.team.name,
+                "members": [
+                    {k: v for k, v in {
+                        "username": m.username, "role": m.role,
+                    }.items() if v}
+                    for m in product.team.members
+                ],
+            }
+
+        if product.custom_properties:
+            odps["customProperties"] = [
+                {"property": cp.property, "value": cp.value}
+                for cp in product.custom_properties
+            ]
+
+        if product.authoritative_definitions:
+            odps["authoritativeDefinitions"] = [
+                {"url": ad.url, "type": ad.type}
+                for ad in product.authoritative_definitions
+            ]
+
+        # Extension: include entity relationship-based dataset hierarchy
+        try:
+            hierarchy = self.get_product_hierarchy(product_id, db=session)
+            if hierarchy.get("datasets"):
+                datasets_export = []
+                for ds in hierarchy["datasets"]:
+                    ds_export: Dict[str, Any] = {
+                        "name": ds["name"],
+                        "status": ds.get("status"),
+                    }
+                    if ds.get("contract"):
+                        ds_export["contractId"] = ds["contract"]["id"]
+                    if ds.get("tables"):
+                        ds_export["tables"] = [
+                            {"name": t["name"], "location": t.get("location")}
+                            for t in ds["tables"]
+                        ]
+                    if ds.get("views"):
+                        ds_export["views"] = [
+                            {"name": v["name"], "location": v.get("location")}
+                            for v in ds["views"]
+                        ]
+                    datasets_export.append(ds_export)
+                odps["datasets"] = datasets_export
+        except Exception as e:
+            logger.warning(f"Failed to include dataset hierarchy in ODPS export: {e}")
+
+        return odps
+
     def link_dataset(
         self,
         product_id: str,

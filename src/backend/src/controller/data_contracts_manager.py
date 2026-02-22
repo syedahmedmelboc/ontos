@@ -597,6 +597,235 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 ))
         return created
 
+    def _resolve_product_via_relationships(self, db_session, contract_id: str) -> Optional[str]:
+        """Resolve the Data Product linked to this contract via entity relationships.
+
+        Path: DataContract <--governedBy-- Dataset <--hasDataset-- DataProduct
+        """
+        try:
+            from src.db_models.entity_relationships import EntityRelationshipDb
+            from src.db_models.data_products import DataProductDb
+
+            # Find Datasets that are governedBy this contract
+            governed_datasets = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.relationship_type == "governedBy",
+                    EntityRelationshipDb.target_type == "DataContract",
+                    EntityRelationshipDb.target_id == contract_id,
+                )
+                .all()
+            )
+            if not governed_datasets:
+                return None
+
+            dataset_ids = [r.source_id for r in governed_datasets]
+
+            # Find DataProducts that hasDataset any of these datasets
+            product_rel = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.relationship_type == "hasDataset",
+                    EntityRelationshipDb.source_type == "DataProduct",
+                    EntityRelationshipDb.target_id.in_(dataset_ids),
+                )
+                .first()
+            )
+            if not product_rel:
+                return None
+
+            product = db_session.query(DataProductDb).filter(DataProductDb.id == product_rel.source_id).first()
+            return product.name if product else None
+        except Exception as e:
+            logger.warning(f"Failed to resolve product via entity relationships for contract {contract_id}: {e}")
+            return None
+
+    def get_contract_entity_relationships(self, db_session, contract_id: str) -> Dict[str, Any]:
+        """Return entity relationships involving this contract (as source or target)."""
+        try:
+            from src.db_models.entity_relationships import EntityRelationshipDb
+
+            outgoing = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.source_type == "DataContract",
+                    EntityRelationshipDb.source_id == contract_id,
+                )
+                .all()
+            )
+            incoming = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.target_type == "DataContract",
+                    EntityRelationshipDb.target_id == contract_id,
+                )
+                .all()
+            )
+
+            def _rel_to_dict(r):
+                return {
+                    "id": str(r.id),
+                    "source_type": r.source_type,
+                    "source_id": r.source_id,
+                    "target_type": r.target_type,
+                    "target_id": r.target_id,
+                    "relationship_type": r.relationship_type,
+                    "properties": r.properties,
+                    "created_at": r.created_at.isoformat() if r.created_at else None,
+                }
+
+            return {
+                "outgoing": [_rel_to_dict(r) for r in outgoing],
+                "incoming": [_rel_to_dict(r) for r in incoming],
+                "total": len(outgoing) + len(incoming),
+            }
+        except Exception as e:
+            logger.warning(f"Failed to get entity relationships for contract {contract_id}: {e}")
+            return {"outgoing": [], "incoming": [], "total": 0}
+
+    def auto_link_schema_to_assets(
+        self,
+        db_session: Session,
+        contract_id: str,
+        current_user: str,
+    ) -> Dict[str, Any]:
+        """Auto-create entity relationships between a contract's schema objects
+        and matching PhysicalTable/PhysicalView assets.
+
+        Matches by: SchemaObjectDb.physical_name ↔ AssetDb.location or AssetDb.name
+        Also creates a governedBy relationship from any Dataset that owns
+        the matched table/view back to this contract.
+
+        Returns summary of created relationships.
+        """
+        from src.db_models.entity_relationships import EntityRelationshipDb
+        from src.db_models.assets import AssetDb, AssetTypeDb
+
+        contract = data_contract_repo.get_with_all(db_session, id=contract_id)
+        if not contract:
+            raise ValueError(f"Contract {contract_id} not found")
+
+        if not contract.schema_objects:
+            return {"matched": 0, "created": [], "skipped": []}
+
+        table_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "Physical Table").first()
+        view_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "Physical View").first()
+        if not table_type and not view_type:
+            # Try alternative names
+            table_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name.ilike("%table%")).first()
+            view_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name.ilike("%view%")).first()
+
+        asset_type_ids = [t.id for t in [table_type, view_type] if t]
+        if not asset_type_ids:
+            return {"matched": 0, "created": [], "skipped": ["No PhysicalTable/PhysicalView asset types found"]}
+
+        created = []
+        skipped = []
+
+        for schema_obj in contract.schema_objects:
+            match_name = schema_obj.physical_name or schema_obj.name
+            if not match_name:
+                skipped.append(f"Schema object {schema_obj.id} has no name")
+                continue
+
+            asset = (
+                db_session.query(AssetDb)
+                .filter(
+                    AssetDb.asset_type_id.in_(asset_type_ids),
+                    (AssetDb.location.ilike(f"%{match_name}%")) | (AssetDb.name == match_name),
+                )
+                .first()
+            )
+
+            if not asset:
+                skipped.append(f"No matching asset found for '{match_name}'")
+                continue
+
+            rel_type = "implementsContract"
+            existing = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.source_type.in_(["PhysicalTable", "PhysicalView"]),
+                    EntityRelationshipDb.source_id == str(asset.id),
+                    EntityRelationshipDb.target_type == "DataContract",
+                    EntityRelationshipDb.target_id == contract_id,
+                    EntityRelationshipDb.relationship_type == rel_type,
+                )
+                .first()
+            )
+            if existing:
+                skipped.append(f"Relationship already exists for '{match_name}'")
+                continue
+
+            asset_type_name = "PhysicalTable"
+            if view_type and asset.asset_type_id == view_type.id:
+                asset_type_name = "PhysicalView"
+
+            rel = EntityRelationshipDb(
+                source_type=asset_type_name,
+                source_id=str(asset.id),
+                target_type="DataContract",
+                target_id=contract_id,
+                relationship_type=rel_type,
+                properties={"schema_object_id": schema_obj.id, "schema_object_name": schema_obj.name},
+                created_by=current_user,
+            )
+            db_session.add(rel)
+            created.append({
+                "asset_id": str(asset.id),
+                "asset_name": asset.name,
+                "asset_type": asset_type_name,
+                "schema_object": schema_obj.name,
+                "relationship_type": rel_type,
+            })
+
+            # Also check if this asset has a parent Dataset; if so, create governedBy
+            parent_ds_rel = (
+                db_session.query(EntityRelationshipDb)
+                .filter(
+                    EntityRelationshipDb.relationship_type.in_(["hasTable", "hasView"]),
+                    EntityRelationshipDb.target_id == str(asset.id),
+                )
+                .first()
+            )
+            if parent_ds_rel:
+                ds_gov_existing = (
+                    db_session.query(EntityRelationshipDb)
+                    .filter(
+                        EntityRelationshipDb.source_type == "Dataset",
+                        EntityRelationshipDb.source_id == parent_ds_rel.source_id,
+                        EntityRelationshipDb.target_type == "DataContract",
+                        EntityRelationshipDb.target_id == contract_id,
+                        EntityRelationshipDb.relationship_type == "governedBy",
+                    )
+                    .first()
+                )
+                if not ds_gov_existing:
+                    gov_rel = EntityRelationshipDb(
+                        source_type="Dataset",
+                        source_id=parent_ds_rel.source_id,
+                        target_type="DataContract",
+                        target_id=contract_id,
+                        relationship_type="governedBy",
+                        created_by=current_user,
+                    )
+                    db_session.add(gov_rel)
+                    created.append({
+                        "asset_id": parent_ds_rel.source_id,
+                        "asset_type": "Dataset",
+                        "relationship_type": "governedBy",
+                        "target": contract_id,
+                    })
+
+        if created:
+            db_session.commit()
+
+        return {
+            "matched": len(created),
+            "created": created,
+            "skipped": skipped,
+        }
+
     def build_odcs_from_db(self, db_obj: DataContractDb, db_session=None) -> Dict[str, Any]:
         odcs: Dict[str, Any] = {
             'id': db_obj.id,
@@ -624,12 +853,10 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         if db_obj.tenant:
             odcs['tenant'] = db_obj.tenant
         
-        # Auto-populate dataProduct from linked output ports in Data Products
-        # This maintains the relational integrity of our model while supporting ODCS format
+        # Auto-populate dataProduct from linked output ports or entity relationships
         if db_session is not None:
             try:
                 from src.db_models.data_products import DataProductDb, OutputPortDb
-                # Find data products that have output ports linked to this contract
                 linked_product = (
                     db_session.query(DataProductDb)
                     .join(OutputPortDb, OutputPortDb.product_id == DataProductDb.id)
@@ -638,12 +865,15 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 )
                 if linked_product:
                     odcs['dataProduct'] = linked_product.name
-                elif db_obj.data_product:
-                    # Fallback to stored value if no linked product found (backward compatibility)
-                    odcs['dataProduct'] = db_obj.data_product
+                else:
+                    # Try entity relationships: Contract <--governedBy-- Dataset <--hasDataset-- Product
+                    product_name = self._resolve_product_via_relationships(db_session, db_obj.id)
+                    if product_name:
+                        odcs['dataProduct'] = product_name
+                    elif db_obj.data_product:
+                        odcs['dataProduct'] = db_obj.data_product
             except Exception as e:
-                logger.warning(f"Failed to auto-populate dataProduct from output ports: {e}")
-                # Fallback to stored value
+                logger.warning(f"Failed to auto-populate dataProduct: {e}")
                 if db_obj.data_product:
                     odcs['dataProduct'] = db_obj.data_product
 

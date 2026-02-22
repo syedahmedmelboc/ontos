@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 // import { Label } from '@/components/ui/label';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
 import { OwnershipPanel } from '@/components/common/ownership-panel';
+import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel';
 // Preview handled in EntityMetadataPanel
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -749,6 +750,14 @@ export default function DataDomainDetailsView() {
 
       {/* Ownership Panel */}
       <OwnershipPanel objectType="data_domain" objectId={domainId!} canAssign className="mb-6" />
+
+      {/* Entity Relationships Panel */}
+      <EntityRelationshipPanel
+        entityType="DataDomain"
+        entityId={domainId!}
+        title="Related Entities"
+        canEdit
+      />
 
       {/* Metadata Panel - Last Section */}
       <EntityMetadataPanel entityId={domainId!} entityType={entityType} />

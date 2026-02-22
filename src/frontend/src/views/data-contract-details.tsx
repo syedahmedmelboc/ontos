@@ -14,6 +14,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { useToast } from '@/hooks/use-toast'
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel'
 import { OwnershipPanel } from '@/components/common/ownership-panel'
+import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel'
 import { CommentSidebar } from '@/components/comments'
 import ConceptSelectDialog from '@/components/semantic/concept-select-dialog'
 import LinkedConceptChips from '@/components/semantic/linked-concept-chips'
@@ -2881,6 +2882,16 @@ export default function DataContractDetails() {
       {/* Ownership Panel */}
       {shouldShowSection('metadata-panel') && contract.id && (
         <OwnershipPanel objectType="data_contract" objectId={contract.id} canAssign={canEditInPlace} className="mb-6" />
+      )}
+
+      {/* Entity Relationships Panel */}
+      {shouldShowSection('metadata-panel') && contract.id && (
+        <EntityRelationshipPanel
+          entityType="DataContract"
+          entityId={contract.id}
+          title="Related Entities"
+          canEdit={canEditInPlace}
+        />
       )}
 
       {/* Metadata Panel */}
