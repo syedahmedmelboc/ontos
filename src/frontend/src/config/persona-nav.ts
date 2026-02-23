@@ -1,6 +1,6 @@
 /**
  * Persona-based navigation config.
- * Each persona has a list of nav items (label, path, icon, optional featureId for permission checks).
+ * Each persona has a list of nav items with optional group headers for sectioned sidebar rendering.
  */
 
 import type { PersonaId } from '@/types/settings';
@@ -12,19 +12,16 @@ import {
   BookOpen,
   MessageSquare,
   FileText,
-  Table2,
   ClipboardCheck,
   CheckCircle,
   FolderKanban,
   BoxSelect,
   UserCheck,
-  FolderOpen,
   Shield,
   GitBranch,
   Tag,
   Layers,
   Shapes,
-  Globe2,
   Search,
   ScrollText,
   Cpu,
@@ -35,20 +32,20 @@ import {
   Lock,
   RefreshCw,
   Globe,
+  Globe2,
   Database,
   Box,
   Settings,
   Truck,
   Info,
   Factory,
-  Crown,
   Scale,
   Landmark,
   ShieldCheck,
   Brain,
+  Network,
   BookMarked,
   Wrench,
-  Network,
 } from 'lucide-react';
 
 export interface PersonaNavItem {
@@ -57,101 +54,105 @@ export interface PersonaNavItem {
   path: string;
   icon: LucideIcon;
   featureId?: string; // If set, menu item is shown only when user has READ_ONLY+ on this feature
+  group?: string; // Section header label key for grouped nav rendering
 }
 
 /** URL prefix per persona. */
 export const PERSONA_BASE_PATHS: Record<PersonaId, string> = {
   data_consumer: '/consumer',
   data_producer: '/producer',
-  data_product_owner: '/owner',
   data_steward: '/steward',
   data_governance_officer: '/governance',
   security_officer: '/security',
-  ontology_engineer: '/ontology',
-  business_term_owner: '/terms',
   administrator: '/admin',
 };
 
-/** Nav items per persona (persona ID -> list of nav items). */
+/** Nav items per persona with grouped sections. */
 export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
   data_consumer: [
-    { id: 'marketplace', labelKey: 'personaNav.marketplace', path: '/consumer', icon: ShoppingCart, featureId: 'data-products' },
-    { id: 'my-products', labelKey: 'personaNav.myProducts', path: '/consumer/my-products', icon: Package, featureId: 'data-products' },
-    { id: 'business-lineage', labelKey: 'personaNav.businessLineage', path: '/consumer/lineage', icon: BookOpen, featureId: 'data-catalog' },
-    { id: 'requests', labelKey: 'personaNav.requests', path: '/consumer/requests', icon: MessageSquare, featureId: 'access-grants' },
+    // -- DISCOVER --
+    { id: 'marketplace', labelKey: 'personaNav.marketplace', path: '/consumer', icon: ShoppingCart, featureId: 'data-products', group: 'discover' },
+    { id: 'catalog', labelKey: 'personaNav.dataCatalog', path: '/consumer/catalog', icon: Search, featureId: 'data-catalog', group: 'discover' },
+    { id: 'glossary', labelKey: 'personaNav.businessGlossary', path: '/consumer/glossary', icon: BookOpen, featureId: 'semantic-models', group: 'discover' },
+    // -- MY DATA --
+    { id: 'my-subscriptions', labelKey: 'personaNav.mySubscriptions', path: '/consumer/my-products', icon: Package, featureId: 'data-products', group: 'myData' },
+    { id: 'requests', labelKey: 'personaNav.accessRequests', path: '/consumer/requests', icon: MessageSquare, featureId: 'access-grants', group: 'myData' },
   ],
   data_producer: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/producer', icon: Home },
-    { id: 'data-products', labelKey: 'personaNav.dataProducts', path: '/producer/products', icon: Package, featureId: 'data-products' },
-    { id: 'hierarchy', labelKey: 'personaNav.hierarchy', path: '/producer/hierarchy', icon: Network, featureId: 'assets' },
-    { id: 'datasets', labelKey: 'personaNav.datasets', path: '/producer/datasets', icon: Table2, featureId: 'assets' },
-    { id: 'contracts', labelKey: 'personaNav.contracts', path: '/producer/contracts', icon: FileText, featureId: 'data-contracts' },
-    { id: 'requests', labelKey: 'personaNav.requests', path: '/producer/requests', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
-  ],
-  data_product_owner: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/owner', icon: Home },
-    { id: 'my-products', labelKey: 'personaNav.myProducts', path: '/owner/products', icon: Package, featureId: 'data-products' },
-    { id: 'contracts', labelKey: 'personaNav.contracts', path: '/owner/contracts', icon: FileText, featureId: 'data-contracts' },
-    { id: 'consumers', labelKey: 'personaNav.consumers', path: '/owner/consumers', icon: Users, featureId: 'data-products' },
-    { id: 'product-health', labelKey: 'personaNav.productHealth', path: '/owner/health', icon: CheckCircle, featureId: 'compliance' },
+    // -- BUILD --
+    { id: 'home', labelKey: 'personaNav.home', path: '/producer', icon: Home, group: 'build' },
+    { id: 'data-products', labelKey: 'personaNav.dataProducts', path: '/producer/products', icon: Package, featureId: 'data-products', group: 'build' },
+    { id: 'contracts', labelKey: 'personaNav.dataContracts', path: '/producer/contracts', icon: FileText, featureId: 'data-contracts', group: 'build' },
+    { id: 'data-assets', labelKey: 'personaNav.dataAssets', path: '/producer/assets', icon: Database, featureId: 'assets', group: 'build' },
+    // -- MONITOR --
+    { id: 'quality', labelKey: 'personaNav.qualityCompliance', path: '/producer/quality', icon: CheckCircle, featureId: 'compliance', group: 'monitor' },
+    { id: 'consumers', labelKey: 'personaNav.myConsumers', path: '/producer/consumers', icon: Users, featureId: 'data-products', group: 'monitor' },
+    // -- TASKS --
+    { id: 'reviews', labelKey: 'personaNav.reviewsApprovals', path: '/producer/reviews', icon: ClipboardCheck, featureId: 'data-asset-reviews', group: 'tasks' },
   ],
   data_steward: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/steward', icon: Home },
-    { id: 'catalog-commander', labelKey: 'personaNav.catalogCommander', path: '/steward/commander', icon: FolderKanban, featureId: 'catalog-commander' },
-    { id: 'hierarchy', labelKey: 'personaNav.hierarchy', path: '/steward/hierarchy', icon: Network, featureId: 'assets' },
-    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/steward/assets', icon: Box, featureId: 'assets' },
-    { id: 'compliance-checks', labelKey: 'personaNav.complianceChecks', path: '/steward/compliance', icon: CheckCircle, featureId: 'compliance' },
-    { id: 'asset-review', labelKey: 'personaNav.assetReview', path: '/steward/reviews', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
-    { id: 'master-data', labelKey: 'personaNav.masterData', path: '/steward/master-data', icon: Database, featureId: 'master-data' },
+    // -- CATALOG --
+    { id: 'home', labelKey: 'personaNav.home', path: '/steward', icon: Home, group: 'catalog' },
+    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/steward/assets', icon: Box, featureId: 'assets', group: 'catalog' },
+    { id: 'catalog', labelKey: 'personaNav.dataCatalog', path: '/steward/catalog', icon: BookOpen, featureId: 'data-catalog', group: 'catalog' },
+    { id: 'glossary', labelKey: 'personaNav.businessGlossary', path: '/steward/glossary', icon: BookMarked, featureId: 'semantic-models', group: 'catalog' },
+    // -- GOVERN --
+    { id: 'compliance', labelKey: 'personaNav.compliance', path: '/steward/compliance', icon: CheckCircle, featureId: 'compliance', group: 'govern' },
+    { id: 'reviews', labelKey: 'personaNav.reviewsApprovals', path: '/steward/reviews', icon: ClipboardCheck, featureId: 'data-asset-reviews', group: 'govern' },
+    { id: 'master-data', labelKey: 'personaNav.masterData', path: '/steward/master-data', icon: Database, featureId: 'master-data', group: 'govern' },
+    // -- TOOLS --
+    { id: 'commander', labelKey: 'personaNav.catalogCommander', path: '/steward/commander', icon: FolderKanban, featureId: 'catalog-commander', group: 'tools' },
   ],
   data_governance_officer: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/governance', icon: Home },
-    { id: 'domains', labelKey: 'personaNav.domains', path: '/governance/domains', icon: BoxSelect, featureId: 'data-domains' },
-    { id: 'teams', labelKey: 'personaNav.teams', path: '/governance/teams', icon: UserCheck, featureId: 'teams' },
-    { id: 'projects', labelKey: 'personaNav.projects', path: '/governance/projects', icon: FolderOpen, featureId: 'projects' },
-    { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets' },
-    { id: 'hierarchy', labelKey: 'personaNav.hierarchy', path: '/governance/hierarchy', icon: Network, featureId: 'assets' },
-    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/governance/assets', icon: Box, featureId: 'assets' },
-    { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings' },
-    { id: 'workflows', labelKey: 'personaNav.workflows', path: '/governance/workflows', icon: GitBranch, featureId: 'process-workflows' },
-    { id: 'master-data', labelKey: 'personaNav.masterData', path: '/governance/master-data', icon: Database, featureId: 'master-data' },
-    { id: 'estate-manager', labelKey: 'personaNav.estateManager', path: '/governance/estates', icon: Globe, featureId: 'estate-manager' },
+    // -- ORGANIZE --
+    { id: 'home', labelKey: 'personaNav.home', path: '/governance', icon: Home, group: 'organize' },
+    { id: 'domains', labelKey: 'personaNav.domains', path: '/governance/domains', icon: BoxSelect, featureId: 'data-domains', group: 'organize' },
+    { id: 'teams', labelKey: 'personaNav.teams', path: '/governance/teams', icon: UserCheck, featureId: 'teams', group: 'organize' },
+    { id: 'ownership', labelKey: 'personaNav.ownership', path: '/governance/ownership', icon: Users2, featureId: 'business-owners', group: 'organize' },
+    // -- STANDARDS --
+    { id: 'collections', labelKey: 'personaNav.collections', path: '/governance/collections', icon: Layers, featureId: 'semantic-models', group: 'standards' },
+    { id: 'glossary', labelKey: 'personaNav.businessGlossary', path: '/governance/glossary', icon: BookMarked, featureId: 'semantic-models', group: 'standards' },
+    { id: 'workflows', labelKey: 'personaNav.workflows', path: '/governance/workflows', icon: GitBranch, featureId: 'process-workflows', group: 'standards' },
+    // -- OVERSIGHT --
+    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/governance/assets', icon: Box, featureId: 'assets', group: 'oversight' },
+    { id: 'compliance', labelKey: 'personaNav.compliance', path: '/governance/compliance', icon: CheckCircle, featureId: 'compliance', group: 'oversight' },
+    { id: 'audit', labelKey: 'personaNav.audit', path: '/governance/audit', icon: ScrollText, featureId: 'audit', group: 'oversight' },
+    { id: 'estates', labelKey: 'personaNav.estateManager', path: '/governance/estates', icon: Globe, featureId: 'estate-manager', group: 'oversight' },
+    // -- ADVANCED --
+    { id: 'ontology', labelKey: 'personaNav.ontologyModels', path: '/governance/ontology', icon: Brain, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'concept-graph', labelKey: 'personaNav.conceptGraph', path: '/governance/graph', icon: Network, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'knowledge-graph', labelKey: 'personaNav.knowledgeGraph', path: '/governance/kg', icon: Globe2, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'rdf-sources', labelKey: 'personaNav.rdfSources', path: '/governance/rdf-sources', icon: Settings, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets', group: 'advanced' },
+    { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings', group: 'advanced' },
   ],
   security_officer: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/security', icon: Home },
-    { id: 'security-features', labelKey: 'personaNav.securityFeatures', path: '/security/features', icon: Lock, featureId: 'security-features' },
-    { id: 'entitlements', labelKey: 'personaNav.entitlements', path: '/security/entitlements', icon: Shield, featureId: 'entitlements' },
-    { id: 'entitlements-sync', labelKey: 'personaNav.entitlementsSync', path: '/security/sync', icon: RefreshCw, featureId: 'entitlements-sync' },
-  ],
-  ontology_engineer: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/ontology', icon: Home },
-    { id: 'domains', labelKey: 'personaNav.domains', path: '/ontology/domains', icon: BoxSelect, featureId: 'data-domains' },
-    { id: 'collections', labelKey: 'personaNav.collections', path: '/ontology/collections', icon: Layers, featureId: 'semantic-models' },
-    { id: 'glossaries', labelKey: 'personaNav.glossaries', path: '/ontology/glossaries', icon: BookOpen, featureId: 'semantic-models' },
-    { id: 'search-concepts', labelKey: 'personaNav.searchConcepts', path: '/ontology/search', icon: Search, featureId: 'semantic-models' },
-    { id: 'knowledge-graph', labelKey: 'personaNav.knowledgeGraph', path: '/ontology/kg', icon: Globe2, featureId: 'semantic-models' },
-    { id: 'semantic-models-settings', labelKey: 'personaNav.semanticModelsSettings', path: '/ontology/semantic-models-settings', icon: Settings, featureId: 'settings' },
-  ],
-  business_term_owner: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/terms', icon: Home },
-    { id: 'terms', labelKey: 'personaNav.terms', path: '/terms/glossary', icon: BookOpen, featureId: 'semantic-models' },
-    { id: 'requests', labelKey: 'personaNav.requests', path: '/terms/requests', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
+    // -- ACCESS CONTROL --
+    { id: 'home', labelKey: 'personaNav.home', path: '/security', icon: Home, group: 'accessControl' },
+    { id: 'entitlements', labelKey: 'personaNav.entitlements', path: '/security/entitlements', icon: Shield, featureId: 'entitlements', group: 'accessControl' },
+    { id: 'security-features', labelKey: 'personaNav.securityFeatures', path: '/security/features', icon: Lock, featureId: 'security-features', group: 'accessControl' },
+    { id: 'sync', labelKey: 'personaNav.entitlementsSync', path: '/security/sync', icon: RefreshCw, featureId: 'entitlements-sync', group: 'accessControl' },
+    // -- MONITORING --
+    { id: 'audit', labelKey: 'personaNav.audit', path: '/security/audit', icon: ScrollText, featureId: 'audit', group: 'monitoring' },
   ],
   administrator: [
-    { id: 'home', labelKey: 'personaNav.home', path: '/admin', icon: Home },
-    { id: 'general', labelKey: 'personaNav.general', path: '/admin/general', icon: Settings, featureId: 'settings' },
-    { id: 'git', labelKey: 'personaNav.git', path: '/admin/git', icon: GitBranch, featureId: 'settings' },
-    { id: 'delivery-modes', labelKey: 'personaNav.deliveryModes', path: '/admin/delivery', icon: Truck, featureId: 'settings' },
-    { id: 'jobs', labelKey: 'personaNav.jobs', path: '/admin/jobs', icon: Briefcase, featureId: 'settings' },
-    { id: 'app-roles', labelKey: 'personaNav.appRoles', path: '/admin/roles', icon: Shield, featureId: 'settings' },
-    { id: 'tags', labelKey: 'personaNav.tags', path: '/admin/tags', icon: Tag, featureId: 'settings' },
-    { id: 'business-roles', labelKey: 'personaNav.businessRoles', path: '/admin/business-roles', icon: Briefcase, featureId: 'business-roles' },
-    { id: 'business-owners', labelKey: 'personaNav.businessOwners', path: '/admin/business-owners', icon: Users2, featureId: 'business-owners' },
-    { id: 'search-settings', labelKey: 'personaNav.searchSettings', path: '/admin/search', icon: Search, featureId: 'settings' },
-    { id: 'mcp-settings', labelKey: 'personaNav.mcpSettings', path: '/admin/mcp', icon: Cpu, featureId: 'settings' },
-    { id: 'ui-customization', labelKey: 'personaNav.uiCustomization', path: '/admin/ui', icon: Palette, featureId: 'settings' },
-    { id: 'audit', labelKey: 'personaNav.audit', path: '/admin/audit', icon: ScrollText, featureId: 'audit' },
-    { id: 'about', labelKey: 'personaNav.about', path: '/admin/about', icon: Info },
+    // -- CONFIGURATION --
+    { id: 'home', labelKey: 'personaNav.home', path: '/admin', icon: Home, group: 'configuration' },
+    { id: 'general', labelKey: 'personaNav.general', path: '/admin/general', icon: Settings, featureId: 'settings', group: 'configuration' },
+    { id: 'ui', labelKey: 'personaNav.uiCustomization', path: '/admin/ui', icon: Palette, featureId: 'settings', group: 'configuration' },
+    // -- AUTOMATION --
+    { id: 'jobs', labelKey: 'personaNav.jobs', path: '/admin/jobs', icon: Briefcase, featureId: 'settings', group: 'automation' },
+    { id: 'delivery', labelKey: 'personaNav.deliveryModes', path: '/admin/delivery', icon: Truck, featureId: 'settings', group: 'automation' },
+    { id: 'git', labelKey: 'personaNav.git', path: '/admin/git', icon: GitBranch, featureId: 'settings', group: 'automation' },
+    // -- ACCESS --
+    { id: 'roles', labelKey: 'personaNav.appRoles', path: '/admin/roles', icon: Shield, featureId: 'settings', group: 'access' },
+    { id: 'business-roles', labelKey: 'personaNav.businessRoles', path: '/admin/business-roles', icon: Briefcase, featureId: 'business-roles', group: 'access' },
+    { id: 'business-owners', labelKey: 'personaNav.businessOwners', path: '/admin/business-owners', icon: Users2, featureId: 'business-owners', group: 'access' },
+    // -- SYSTEM --
+    { id: 'search-settings', labelKey: 'personaNav.searchSettings', path: '/admin/search', icon: Search, featureId: 'settings', group: 'system' },
+    { id: 'mcp', labelKey: 'personaNav.mcpSettings', path: '/admin/mcp', icon: Cpu, featureId: 'settings', group: 'system' },
+    { id: 'audit', labelKey: 'personaNav.audit', path: '/admin/audit', icon: ScrollText, featureId: 'audit', group: 'system' },
+    { id: 'about', labelKey: 'personaNav.about', path: '/admin/about', icon: Info, group: 'system' },
   ],
 };
 
@@ -159,12 +160,9 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
 export const PERSONA_LABEL_KEYS: Record<PersonaId, string> = {
   data_consumer: 'personas.data_consumer',
   data_producer: 'personas.data_producer',
-  data_product_owner: 'personas.data_product_owner',
   data_steward: 'personas.data_steward',
   data_governance_officer: 'personas.data_governance_officer',
   security_officer: 'personas.security_officer',
-  ontology_engineer: 'personas.ontology_engineer',
-  business_term_owner: 'personas.business_term_owner',
   administrator: 'personas.administrator',
 };
 
@@ -192,12 +190,6 @@ export const PERSONA_META: Record<PersonaId, PersonaMeta> = {
     textClass: 'text-emerald-600 dark:text-emerald-400',
     descriptionKey: 'personaDescriptions.data_producer',
   },
-  data_product_owner: {
-    icon: Crown,
-    bgClass: 'bg-orange-500/15 dark:bg-orange-500/20',
-    textClass: 'text-orange-600 dark:text-orange-400',
-    descriptionKey: 'personaDescriptions.data_product_owner',
-  },
   data_steward: {
     icon: Scale,
     bgClass: 'bg-amber-500/15 dark:bg-amber-500/20',
@@ -215,18 +207,6 @@ export const PERSONA_META: Record<PersonaId, PersonaMeta> = {
     bgClass: 'bg-red-500/15 dark:bg-red-500/20',
     textClass: 'text-red-600 dark:text-red-400',
     descriptionKey: 'personaDescriptions.security_officer',
-  },
-  ontology_engineer: {
-    icon: Brain,
-    bgClass: 'bg-teal-500/15 dark:bg-teal-500/20',
-    textClass: 'text-teal-600 dark:text-teal-400',
-    descriptionKey: 'personaDescriptions.ontology_engineer',
-  },
-  business_term_owner: {
-    icon: BookMarked,
-    bgClass: 'bg-pink-500/15 dark:bg-pink-500/20',
-    textClass: 'text-pink-600 dark:text-pink-400',
-    descriptionKey: 'personaDescriptions.business_term_owner',
   },
   administrator: {
     icon: Wrench,

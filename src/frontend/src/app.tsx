@@ -44,7 +44,6 @@ import SettingsDeliveryView from './views/settings-delivery';
 import SettingsJobsView from './views/settings-jobs';
 import SettingsRolesView from './views/settings-roles';
 import SettingsTagsView from './views/settings-tags';
-import SettingsSemanticModelsView from './views/settings-semantic-models';
 import SettingsSearchView from './views/settings-search';
 import SettingsMcpView from './views/settings-mcp';
 import SettingsUiView from './views/settings-ui';
@@ -57,21 +56,20 @@ import MyProducts from './views/my-products';
 import MyRequests from './views/my-requests';
 import SearchView from './views/search';
 import TeamsView from './views/teams';
-import ProjectsView from './views/projects';
 import AuditTrail from './views/audit-trail';
 import WorkflowDesignerView from './views/workflow-designer';
 import Workflows from './views/workflows';
 import OntologySearchView from './views/ontology-search';
 import OntologyHomeView from './views/ontology-home';
-import CollectionsView from './views/collections';
 import BusinessTermsView from './views/business-terms';
 import AssetTypesView from './views/asset-types';
 import AssetExplorerView from './views/asset-explorer';
 import AssetDetailView from './views/asset-detail';
-import HierarchyBrowserView from './views/hierarchy-browser';
 import BusinessRolesView from './views/business-roles';
 import BusinessOwnersView from './views/business-owners';
 import OwnerConsumersView from './views/owner-consumers';
+import CollectionsView from './views/collections';
+import SettingsSemanticModelsView from './views/settings-semantic-models';
 
 /** Syncs the URL prefix to the persona store so direct navigation works. */
 function PersonaUrlSync() {
@@ -130,102 +128,123 @@ export default function App() {
 
               {/* === Persona: Data Consumer /consumer === */}
               <Route path="/consumer" element={<Home />} />
+              <Route path="/consumer/catalog" element={<DataCatalog />} />
+              <Route path="/consumer/catalog/*" element={<DataCatalogDetails />} />
+              <Route path="/consumer/glossary" element={<BusinessTermsView />} />
               <Route path="/consumer/my-products" element={<MyProducts />} />
               <Route path="/consumer/my-products/:productId" element={<DataProductDetails />} />
-              <Route path="/consumer/lineage" element={<DataCatalog />} />
-              <Route path="/consumer/lineage/*" element={<DataCatalogDetails />} />
               <Route path="/consumer/requests" element={<MyRequests />} />
+              {/* Legacy consumer paths */}
+              <Route path="/consumer/lineage" element={<Navigate to="/consumer/catalog" replace />} />
 
-              {/* === Persona: Data Producer /producer === */}
+              {/* === Persona: Data Producer /producer (absorbs Data Product Owner) === */}
               <Route path="/producer" element={<Home />} />
               <Route path="/producer/products" element={<DataProducts />} />
               <Route path="/producer/products/:productId" element={<DataProductDetails />} />
-              <Route path="/producer/hierarchy" element={<HierarchyBrowserView />} />
-              <Route path="/producer/datasets" element={<AssetExplorerView />} />
-              <Route path="/producer/datasets/:assetId" element={<AssetDetailView />} />
               <Route path="/producer/contracts" element={<DataContracts />} />
               <Route path="/producer/contracts/:contractId" element={<DataContractDetails />} />
-              <Route path="/producer/requests" element={<DataAssetReviews />} />
-              <Route path="/producer/requests/:requestId" element={<DataAssetReviewDetails />} />
+              <Route path="/producer/assets" element={<AssetExplorerView />} />
+              <Route path="/producer/assets/:assetId" element={<AssetDetailView />} />
+              <Route path="/producer/quality" element={<Compliance />} />
+              <Route path="/producer/quality/policies/:policyId" element={<CompliancePolicyDetails />} />
+              <Route path="/producer/quality/runs/:runId" element={<ComplianceRunDetails />} />
+              <Route path="/producer/consumers" element={<OwnerConsumersView />} />
+              <Route path="/producer/reviews" element={<DataAssetReviews />} />
+              <Route path="/producer/reviews/:requestId" element={<DataAssetReviewDetails />} />
+              {/* Legacy producer paths */}
+              <Route path="/producer/datasets" element={<Navigate to="/producer/assets" replace />} />
+              <Route path="/producer/requests" element={<Navigate to="/producer/reviews" replace />} />
+              <Route path="/producer/hierarchy" element={<Navigate to="/producer/assets" replace />} />
 
-              {/* === Persona: Data Product Owner /owner === */}
-              <Route path="/owner" element={<Home />} />
-              <Route path="/owner/products" element={<DataProducts />} />
-              <Route path="/owner/products/:productId" element={<DataProductDetails />} />
-              <Route path="/owner/contracts" element={<DataContracts />} />
-              <Route path="/owner/contracts/:contractId" element={<DataContractDetails />} />
-              <Route path="/owner/consumers" element={<OwnerConsumersView />} />
-              <Route path="/owner/health" element={<Compliance />} />
-              <Route path="/owner/health/policies/:policyId" element={<CompliancePolicyDetails />} />
-              <Route path="/owner/health/runs/:runId" element={<ComplianceRunDetails />} />
+              {/* === Legacy: Data Product Owner /owner -> redirect to /producer === */}
+              <Route path="/owner" element={<Navigate to="/producer" replace />} />
+              <Route path="/owner/*" element={<Navigate to="/producer" replace />} />
 
-              {/* === Persona: Data Steward /steward === */}
+              {/* === Persona: Data Steward /steward (absorbs Business Term Owner) === */}
               <Route path="/steward" element={<Home />} />
-              <Route path="/steward/commander" element={<CatalogCommander />} />
-              <Route path="/steward/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/steward/assets" element={<AssetExplorerView />} />
               <Route path="/steward/assets/:assetId" element={<AssetDetailView />} />
+              <Route path="/steward/catalog" element={<DataCatalog />} />
+              <Route path="/steward/catalog/*" element={<DataCatalogDetails />} />
+              <Route path="/steward/glossary" element={<BusinessTermsView />} />
               <Route path="/steward/compliance" element={<Compliance />} />
               <Route path="/steward/compliance/policies/:policyId" element={<CompliancePolicyDetails />} />
               <Route path="/steward/compliance/runs/:runId" element={<ComplianceRunDetails />} />
               <Route path="/steward/reviews" element={<DataAssetReviews />} />
               <Route path="/steward/reviews/:requestId" element={<DataAssetReviewDetails />} />
               <Route path="/steward/master-data" element={<MasterDataManagement />} />
+              <Route path="/steward/commander" element={<CatalogCommander />} />
+              {/* Legacy steward paths */}
+              <Route path="/steward/hierarchy" element={<Navigate to="/steward/assets" replace />} />
 
-              {/* === Persona: Data Governance Officer /governance === */}
+              {/* === Persona: Data Governor /governance (absorbs Ontology Engineer) === */}
               <Route path="/governance" element={<Home />} />
               <Route path="/governance/domains" element={<DataDomainsView />} />
               <Route path="/governance/domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/governance/teams" element={<TeamsView />} />
-              <Route path="/governance/projects" element={<ProjectsView />} />
+              <Route path="/governance/ownership" element={<BusinessOwnersView />} />
               <Route path="/governance/policies" element={<Navigate to="/governance/assets" replace />} />
-              <Route path="/governance/asset-types" element={<AssetTypesView />} />
-              <Route path="/governance/hierarchy" element={<HierarchyBrowserView />} />
-              <Route path="/governance/assets" element={<AssetExplorerView />} />
-              <Route path="/governance/assets/:assetId" element={<AssetDetailView />} />
-              <Route path="/governance/tags" element={<SettingsTagsView />} />
+              <Route path="/governance/glossary" element={<BusinessTermsView />} />
               <Route path="/governance/workflows" element={<Workflows />} />
               <Route path="/governance/workflows/new" element={<WorkflowDesignerView />} />
               <Route path="/governance/workflows/:workflowId" element={<WorkflowDesignerView />} />
-              <Route path="/governance/master-data" element={<MasterDataManagement />} />
+              <Route path="/governance/assets" element={<AssetExplorerView />} />
+              <Route path="/governance/assets/:assetId" element={<AssetDetailView />} />
+              <Route path="/governance/compliance" element={<Compliance />} />
+              <Route path="/governance/compliance/policies/:policyId" element={<CompliancePolicyDetails />} />
+              <Route path="/governance/compliance/runs/:runId" element={<ComplianceRunDetails />} />
+              <Route path="/governance/audit" element={<AuditTrail />} />
               <Route path="/governance/estates" element={<EstateManager />} />
               <Route path="/governance/estates/:estateId" element={<EstateDetailsView />} />
+              <Route path="/governance/collections" element={<CollectionsView />} />
+              <Route path="/governance/rdf-sources" element={<SettingsSemanticModelsView />} />
+              <Route path="/governance/ontology" element={<OntologySearchView />} />
+              <Route path="/governance/graph" element={<OntologyHomeView />} />
+              <Route path="/governance/kg" element={<OntologySearchView />} />
+              <Route path="/governance/asset-types" element={<AssetTypesView />} />
+              <Route path="/governance/tags" element={<SettingsTagsView />} />
+              {/* Legacy governance paths */}
+              <Route path="/governance/projects" element={<Navigate to="/governance/teams" replace />} />
+              <Route path="/governance/hierarchy" element={<Navigate to="/governance/assets" replace />} />
+              <Route path="/governance/master-data" element={<Navigate to="/governance/assets" replace />} />
+
+              {/* === Legacy: Ontology Engineer /ontology -> redirect to /governance === */}
+              <Route path="/ontology" element={<Navigate to="/governance" replace />} />
+              <Route path="/ontology/domains" element={<Navigate to="/governance/domains" replace />} />
+              <Route path="/ontology/domains/:domainId" element={<Navigate to="/governance/domains" replace />} />
+              <Route path="/ontology/collections" element={<Navigate to="/governance/collections" replace />} />
+              <Route path="/ontology/glossaries" element={<Navigate to="/governance/glossary" replace />} />
+              <Route path="/ontology/search" element={<Navigate to="/governance/ontology" replace />} />
+              <Route path="/ontology/kg" element={<Navigate to="/governance/kg" replace />} />
+              <Route path="/ontology/semantic-models-settings" element={<Navigate to="/governance/rdf-sources" replace />} />
+              <Route path="/ontology/*" element={<Navigate to="/governance" replace />} />
+
+              {/* === Legacy: Business Term Owner /terms -> redirect to /steward === */}
+              <Route path="/terms" element={<Navigate to="/steward" replace />} />
+              <Route path="/terms/glossary" element={<Navigate to="/steward/glossary" replace />} />
+              <Route path="/terms/requests" element={<Navigate to="/steward/reviews" replace />} />
+              <Route path="/terms/*" element={<Navigate to="/steward" replace />} />
 
               {/* === Persona: Security Officer /security === */}
               <Route path="/security" element={<Home />} />
               <Route path="/security/features" element={<SecurityFeatures />} />
               <Route path="/security/entitlements" element={<Entitlements />} />
               <Route path="/security/sync" element={<EntitlementsSync />} />
-
-              {/* === Persona: Ontology Engineer /ontology === */}
-              <Route path="/ontology" element={<OntologyHomeView />} />
-              <Route path="/ontology/domains" element={<DataDomainsView />} />
-              <Route path="/ontology/domains/:domainId" element={<DataDomainDetailsView />} />
-              <Route path="/ontology/collections" element={<CollectionsView />} />
-              <Route path="/ontology/glossaries" element={<BusinessTermsView />} />
-              <Route path="/ontology/search" element={<OntologySearchView />} />
-              <Route path="/ontology/kg" element={<OntologySearchView />} />
-              <Route path="/ontology/semantic-models-settings" element={<SettingsSemanticModelsView />} />
-
-              {/* === Persona: Business Term Owner /terms === */}
-              <Route path="/terms" element={<Home />} />
-              <Route path="/terms/glossary" element={<BusinessTermsView />} />
-              <Route path="/terms/requests" element={<DataAssetReviews />} />
-              <Route path="/terms/requests/:requestId" element={<DataAssetReviewDetails />} />
+              <Route path="/security/audit" element={<AuditTrail />} />
 
               {/* === Persona: Administrator /admin === */}
               <Route path="/admin" element={<Home />} />
               <Route path="/admin/general" element={<SettingsGeneralView />} />
-              <Route path="/admin/git" element={<SettingsGitView />} />
-              <Route path="/admin/delivery" element={<SettingsDeliveryView />} />
+              <Route path="/admin/ui" element={<SettingsUiView />} />
               <Route path="/admin/jobs" element={<SettingsJobsView />} />
+              <Route path="/admin/delivery" element={<SettingsDeliveryView />} />
+              <Route path="/admin/git" element={<SettingsGitView />} />
               <Route path="/admin/roles" element={<SettingsRolesView />} />
-              <Route path="/admin/tags" element={<SettingsTagsView />} />
               <Route path="/admin/business-roles" element={<BusinessRolesView />} />
               <Route path="/admin/business-owners" element={<BusinessOwnersView />} />
               <Route path="/admin/search" element={<SettingsSearchView />} />
               <Route path="/admin/mcp" element={<SettingsMcpView />} />
-              <Route path="/admin/ui" element={<SettingsUiView />} />
+              <Route path="/admin/tags" element={<SettingsTagsView />} />
               <Route path="/admin/audit" element={<AuditTrail />} />
               <Route path="/admin/about" element={<About />} />
 
