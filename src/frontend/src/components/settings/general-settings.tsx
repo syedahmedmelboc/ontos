@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Settings } from 'lucide-react';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import { useToast } from '@/hooks/use-toast';
@@ -118,12 +117,16 @@ export default function GeneralSettings() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('settings:general.title')}</CardTitle>
-        <CardDescription>{t('settings:general.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Settings className="w-8 h-8" />
+          {t('settings:general.title')}
+        </h1>
+        <p className="text-muted-foreground mt-1">{t('settings:general.description')}</p>
+      </div>
+
+      <div className="space-y-6">
         {/* Background Jobs */}
         <div className="flex items-center space-x-2">
           <Switch
@@ -293,19 +296,19 @@ export default function GeneralSettings() {
             </div>
           </div>
         </div>
-      </CardContent>
-      {hasWriteAccess && (
-        <CardFooter>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            {t('settings:general.saveButton', 'Save Settings')}
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+        {hasWriteAccess && (
+          <div className="pt-4">
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {t('settings:general.saveButton', 'Save Settings')}
+            </Button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

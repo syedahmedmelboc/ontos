@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Truck } from 'lucide-react';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import { useToast } from '@/hooks/use-toast';
@@ -87,14 +86,18 @@ export default function DeliverySettings() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('settings:delivery.title', 'Delivery Modes')}</CardTitle>
-        <CardDescription>
+    <>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Truck className="w-8 h-8" />
+          {t('settings:delivery.title', 'Delivery Modes')}
+        </h1>
+        <p className="text-muted-foreground mt-1">
           {t('settings:delivery.description', 'Configure how governance changes are propagated to external systems. Multiple modes can be active simultaneously.')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </p>
+      </div>
+
+      <div className="space-y-6">
         {/* Direct Mode */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -180,19 +183,19 @@ export default function DeliverySettings() {
             />
           </div>
         </div>
-      </CardContent>
-      {hasWriteAccess && (
-        <CardFooter>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            {t('settings:delivery.saveButton', 'Save Delivery Settings')}
-          </Button>
-        </CardFooter>
-      )}
-    </Card>
+        {hasWriteAccess && (
+          <div className="pt-4">
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {t('settings:delivery.saveButton', 'Save Delivery Settings')}
+            </Button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
