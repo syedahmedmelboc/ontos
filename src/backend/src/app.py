@@ -59,6 +59,7 @@ from src.routes import (
     projects_routes,
     connection_routes,
     schema_import_routes,
+    asset_bulk_routes,
     costs_routes,
     workflows_routes,
     assets_routes,
@@ -253,6 +254,7 @@ openapi_tags = [
     {"name": "Settings", "description": "Application settings and configuration"},
     {"name": "Connections", "description": "Manage external data platform connections"},
     {"name": "Schema Import", "description": "Browse remote systems and import schemas as Ontos assets"},
+    {"name": "Asset Bulk", "description": "Bulk import and export of assets via CSV/XLSX"},
 ]
 
 # Create single FastAPI app with settings dependency
@@ -308,6 +310,7 @@ approvals_routes.register_routes(app)
 
 # Reference Data - Assets, Business Roles & Owners
 assets_routes.register_routes(app)
+asset_bulk_routes.register_routes(app)
 business_roles_routes.register_routes(app)
 business_owners_routes.register_routes(app)
 

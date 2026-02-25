@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import {
   Box, ChevronDown, MoreHorizontal, PlusCircle, AlertCircle, Loader2, Search,
   Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,
-  Server, Shield, BookOpen, Database, FolderOpen, Shapes,
+  Server, Shield, BookOpen, Database, FolderOpen, Shapes, FileSpreadsheet,
 } from 'lucide-react';
 import { ListViewSkeleton } from '@/components/common/list-view-skeleton';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { AssetRead, AssetTypeRead } from '@/types/asset';
 import { EntityTypeDefinition } from '@/types/ontology-schema';
 import { AssetFormDialog } from '@/components/common/asset-form-dialog';
+import AssetImportExportDialog from '@/components/assets/asset-import-export-dialog';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { RelativeDate } from '@/components/common/relative-date';
@@ -79,6 +80,8 @@ export default function AssetExplorerView() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<AssetRead | null>(null);
   const [ontologyTypes, setOntologyTypes] = useState<EntityTypeDefinition[]>([]);
+  const [isImportExportOpen, setIsImportExportOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const didInitialSelect = useRef(false);
 
   const navigate = useNavigate();
@@ -93,6 +96,9 @@ export default function AssetExplorerView() {
   const canRead = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.READ_ONLY);
   const canWrite = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.READ_WRITE);
   const canAdmin = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.ADMIN);
+
+  const selectedAssetIds = useMemo(() => Object.keys(rowSelection), [rowSelection]);
+  const hasSelection = selectedAssetIds.length > 0;
 
   const fetchAssetTypes = useCallback(async () => {
     if (!canRead && !permissionsLoading) return;
@@ -154,6 +160,7 @@ export default function AssetExplorerView() {
   useEffect(() => {
     if (didInitialSelect.current) {
       fetchAssets(selectedTypeId);
+      setRowSelection({});
     }
   }, [selectedTypeId, fetchAssets]);
 
@@ -490,16 +497,26 @@ export default function AssetExplorerView() {
                       ? `No ${selectedType.name} assets yet`
                       : 'Select an asset type to view assets'}
                   </p>
-                  {canWrite && selectedType && (
-                    <Button
-                      variant="outline"
-                      className="mt-3"
-                      size="sm"
-                      onClick={() => { setEditingAsset(null); setIsFormOpen(true); }}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" /> Create {selectedType.name}
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2 mt-3 justify-center">
+                    {canRead && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsImportExportOpen(true)}
+                      >
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Import / Export
+                      </Button>
+                    )}
+                    {canWrite && selectedType && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setEditingAsset(null); setIsFormOpen(true); }}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" /> Create {selectedType.name}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <DataTable
@@ -508,17 +525,32 @@ export default function AssetExplorerView() {
                   searchColumn="name"
                   storageKey={`asset-explorer-${selectedTypeId || 'all'}`}
                   onRowClick={(row) => navigate(`/governance/assets/${row.id}`)}
+                  rowSelection={rowSelection}
+                  onRowSelectionChange={setRowSelection}
                   toolbarActions={
-                    canWrite && selectedType ? (
-                      <Button
-                        size="sm"
-                        className="h-9"
-                        onClick={() => { setEditingAsset(null); setIsFormOpen(true); }}
-                      >
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add {selectedType.name}
-                      </Button>
-                    ) : undefined
+                    <div className="flex items-center gap-2">
+                      {canRead && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9"
+                          onClick={() => setIsImportExportOpen(true)}
+                        >
+                          <FileSpreadsheet className="mr-2 h-4 w-4" />
+                          {hasSelection ? `Export ${selectedAssetIds.length} Selected` : 'Import / Export'}
+                        </Button>
+                      )}
+                      {canWrite && selectedType && (
+                        <Button
+                          size="sm"
+                          className="h-9"
+                          onClick={() => { setEditingAsset(null); setIsFormOpen(true); }}
+                        >
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add {selectedType.name}
+                        </Button>
+                      )}
+                    </div>
                   }
                 />
               )}
@@ -558,6 +590,22 @@ export default function AssetExplorerView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AssetImportExportDialog
+        isOpen={isImportExportOpen}
+        onOpenChange={(open) => {
+          setIsImportExportOpen(open);
+          if (!open) setRowSelection({});
+        }}
+        selectedAssetTypeId={selectedTypeId}
+        selectedAssetTypeName={selectedType?.name}
+        selectedAssetIds={selectedAssetIds}
+        onImportComplete={() => {
+          fetchAssets(selectedTypeId);
+          fetchAssetTypes();
+          setRowSelection({});
+        }}
+      />
     </div>
   );
 }
