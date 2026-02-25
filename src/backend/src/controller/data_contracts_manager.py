@@ -690,7 +690,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         current_user: str,
     ) -> Dict[str, Any]:
         """Auto-create entity relationships between a contract's schema objects
-        and matching PhysicalTable/PhysicalView assets.
+        and matching Table/View assets.
 
         Matches by: SchemaObjectDb.physical_name ↔ AssetDb.location or AssetDb.name
         Also creates a governedBy relationship from any Dataset that owns
@@ -708,16 +708,12 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         if not contract.schema_objects:
             return {"matched": 0, "created": [], "skipped": []}
 
-        table_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "Physical Table").first()
-        view_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "Physical View").first()
-        if not table_type and not view_type:
-            # Try alternative names
-            table_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name.ilike("%table%")).first()
-            view_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name.ilike("%view%")).first()
+        table_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "Table").first()
+        view_type = db_session.query(AssetTypeDb).filter(AssetTypeDb.name == "View").first()
 
         asset_type_ids = [t.id for t in [table_type, view_type] if t]
         if not asset_type_ids:
-            return {"matched": 0, "created": [], "skipped": ["No PhysicalTable/PhysicalView asset types found"]}
+            return {"matched": 0, "created": [], "skipped": ["No Table/View asset types found"]}
 
         created = []
         skipped = []
@@ -745,7 +741,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             existing = (
                 db_session.query(EntityRelationshipDb)
                 .filter(
-                    EntityRelationshipDb.source_type.in_(["PhysicalTable", "PhysicalView"]),
+                    EntityRelationshipDb.source_type.in_(["Table", "View"]),
                     EntityRelationshipDb.source_id == str(asset.id),
                     EntityRelationshipDb.target_type == "DataContract",
                     EntityRelationshipDb.target_id == contract_id,
@@ -757,9 +753,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 skipped.append(f"Relationship already exists for '{match_name}'")
                 continue
 
-            asset_type_name = "PhysicalTable"
+            asset_type_name = "Table"
             if view_type and asset.asset_type_id == view_type.id:
-                asset_type_name = "PhysicalView"
+                asset_type_name = "View"
 
             rel = EntityRelationshipDb(
                 source_type=asset_type_name,

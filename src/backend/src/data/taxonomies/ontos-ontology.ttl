@@ -323,7 +323,19 @@ ontos:Dataset a rdfs:Class ;
     ontos:uiDisplayOrder 2 ;
     ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
 
-ontos:PhysicalTable a rdfs:Class ;
+ontos:Schema a rdfs:Class ;
+    rdfs:subClassOf ontos:Asset ;
+    rdfs:label "Schema" ;
+    rdfs:comment "Platform-level container (UC schema, BQ dataset, Snowflake schema) that organizes tables and views" ;
+    skos:example "catalog.sales, project.analytics_dataset" ;
+    skos:definition "Structural container between System and Table/View in the platform hierarchy" ;
+    ontos:modelTier "asset" ;
+    ontos:uiIcon "FolderOpen" ;
+    ontos:uiCategory "data" ;
+    ontos:uiDisplayOrder 2 ;
+    ontos:uiPersonaVisibility "admin,steward,producer" .
+
+ontos:Table a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
     rdfs:label "Table" ;
     rdfs:comment "Physical table in a data platform (Unity Catalog, Snowflake, BigQuery, etc.)" ;
@@ -334,7 +346,7 @@ ontos:PhysicalTable a rdfs:Class ;
     ontos:uiDisplayOrder 3 ;
     ontos:uiPersonaVisibility "admin,steward,producer" .
 
-ontos:PhysicalView a rdfs:Class ;
+ontos:View a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
     rdfs:label "View" ;
     rdfs:comment "Physical view in a data platform" ;
@@ -344,7 +356,7 @@ ontos:PhysicalView a rdfs:Class ;
     ontos:uiDisplayOrder 4 ;
     ontos:uiPersonaVisibility "admin,steward,producer" .
 
-ontos:PhysicalColumn a rdfs:Class ;
+ontos:Column a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
     rdfs:label "Column" ;
     rdfs:comment "Column within a physical table or view" ;
@@ -556,11 +568,22 @@ ontos:hasDataset a owl:ObjectProperty ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
+ontos:hasSchema a owl:ObjectProperty ;
+    rdfs:label "has schema" ;
+    rdfs:comment "Links a system to a schema/namespace it contains" ;
+    rdfs:domain ontos:System ;
+    rdfs:range ontos:Schema ;
+    ontos:uiLabel "Schemas" ;
+    ontos:inverseLabel "System" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
 ontos:hasTable a owl:ObjectProperty ;
     rdfs:label "has table" ;
-    rdfs:comment "Links a dataset to a physical table it contains" ;
-    rdfs:domain ontos:Dataset ;
-    rdfs:range ontos:PhysicalTable ;
+    rdfs:comment "Links a dataset or schema to a table it contains" ;
+    rdfs:domain ontos:Dataset , ontos:Schema ;
+    rdfs:range ontos:Table ;
     ontos:uiLabel "Tables" ;
     ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
@@ -569,9 +592,9 @@ ontos:hasTable a owl:ObjectProperty ;
 
 ontos:hasView a owl:ObjectProperty ;
     rdfs:label "has view" ;
-    rdfs:comment "Links a dataset to a physical view it contains" ;
-    rdfs:domain ontos:Dataset ;
-    rdfs:range ontos:PhysicalView ;
+    rdfs:comment "Links a dataset or schema to a view it contains" ;
+    rdfs:domain ontos:Dataset , ontos:Schema ;
+    rdfs:range ontos:View ;
     ontos:uiLabel "Views" ;
     ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
@@ -581,8 +604,8 @@ ontos:hasView a owl:ObjectProperty ;
 ontos:hasColumn a owl:ObjectProperty ;
     rdfs:label "has column" ;
     rdfs:comment "Links a table or view to its columns" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
-    rdfs:range ontos:PhysicalColumn ;
+    rdfs:domain ontos:Table , ontos:View ;
+    rdfs:range ontos:Column ;
     ontos:uiLabel "Columns" ;
     ontos:inverseLabel "Table" ;
     ontos:cardinality "0..*" ;
@@ -604,7 +627,7 @@ ontos:governedBy a owl:ObjectProperty ;
 ontos:implementsContract a owl:ObjectProperty ;
     rdfs:label "implements contract" ;
     rdfs:comment "Links a physical table to the data contract it implements (for direct contract-table mapping)" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
+    rdfs:domain ontos:Table , ontos:View ;
     rdfs:range ontos:DataContract ;
     ontos:uiLabel "Implements Contract" ;
     ontos:inverseLabel "Implementing Tables" ;
@@ -739,7 +762,7 @@ ontos:implementedBy a owl:ObjectProperty ;
     rdfs:label "implemented by" ;
     rdfs:comment "Links a logical attribute to the physical assets (columns, datasets) that implement it" ;
     rdfs:domain ontos:LogicalAttribute ;
-    rdfs:range ontos:Dataset , ontos:PhysicalColumn ;
+    rdfs:range ontos:Dataset , ontos:Column ;
     ontos:uiLabel "Implemented By" ;
     ontos:inverseLabel "Implements" ;
     ontos:cardinality "0..*" ;
@@ -1100,12 +1123,12 @@ ontos:datasetRole a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" ;
     ontos:uiSelectOptions "primary,supporting,reference,staging" .
 
-# --- PhysicalTable / PhysicalView ---
+# --- Table / View ---
 
 ontos:physicalPath a owl:DatatypeProperty ;
     rdfs:label "physical path" ;
     rdfs:comment "Fully qualified path in the target system (e.g. catalog.schema.table)" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
+    rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
     ontos:uiFieldOrder 10 ;
@@ -1115,7 +1138,7 @@ ontos:physicalPath a owl:DatatypeProperty ;
 ontos:platform a owl:DatatypeProperty ;
     rdfs:label "platform" ;
     rdfs:comment "Data platform hosting this table or view" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
+    rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
     ontos:uiFieldOrder 11 ;
@@ -1126,7 +1149,7 @@ ontos:platform a owl:DatatypeProperty ;
 ontos:environment a owl:DatatypeProperty ;
     rdfs:label "environment" ;
     rdfs:comment "Deployment environment" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
+    rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
     ontos:uiFieldOrder 12 ;
@@ -1137,7 +1160,7 @@ ontos:environment a owl:DatatypeProperty ;
 ontos:tableRole a owl:DatatypeProperty ;
     rdfs:label "table role" ;
     rdfs:comment "Role of this table within its dataset" ;
-    rdfs:domain ontos:PhysicalTable , ontos:PhysicalView ;
+    rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
     ontos:uiFieldOrder 13 ;
@@ -1145,12 +1168,12 @@ ontos:tableRole a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" ;
     ontos:uiSelectOptions "main,dimension,lookup,reference,staging" .
 
-# --- PhysicalColumn ---
+# --- Column ---
 
 ontos:columnDataType a owl:DatatypeProperty ;
     rdfs:label "data type" ;
     rdfs:comment "Data type of the column (e.g. STRING, INT, TIMESTAMP)" ;
-    rdfs:domain ontos:PhysicalColumn ;
+    rdfs:domain ontos:Column ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
     ontos:uiFieldOrder 10 ;
@@ -1160,7 +1183,7 @@ ontos:columnDataType a owl:DatatypeProperty ;
 ontos:isNullable a owl:DatatypeProperty ;
     rdfs:label "is nullable" ;
     rdfs:comment "Whether the column allows NULL values" ;
-    rdfs:domain ontos:PhysicalColumn ;
+    rdfs:domain ontos:Column ;
     rdfs:range xsd:boolean ;
     ontos:uiFieldType "boolean" ;
     ontos:uiFieldOrder 11 ;
@@ -1169,7 +1192,7 @@ ontos:isNullable a owl:DatatypeProperty ;
 
 ontos:isPrimaryKey a owl:DatatypeProperty ;
     rdfs:label "is primary key" ;
-    rdfs:domain ontos:PhysicalColumn ;
+    rdfs:domain ontos:Column ;
     rdfs:range xsd:boolean ;
     ontos:uiFieldType "boolean" ;
     ontos:uiFieldOrder 12 ;
@@ -1179,7 +1202,7 @@ ontos:isPrimaryKey a owl:DatatypeProperty ;
 ontos:classification a owl:DatatypeProperty ;
     rdfs:label "classification" ;
     rdfs:comment "Data classification level (e.g. public, internal, confidential, restricted)" ;
-    rdfs:domain ontos:PhysicalColumn ;
+    rdfs:domain ontos:Column ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
     ontos:uiFieldOrder 13 ;
@@ -1659,7 +1682,7 @@ ontos:promotedBy a owl:DatatypeProperty ;
 # ontos:customer-360-product ontos:hasDataset ontos:customer-master-dataset .
 # ontos:customer-master-dataset ontos:governedBy ontos:customer-data-contract .
 #
-# ontos:customer-table a ontos:PhysicalTable ;
+# ontos:customer-table a ontos:Table ;
 #     ontos:name "customers" ;
 #     ontos:physicalPath "main.customer_data.customers" ;
 #     ontos:platform "databricks" ;
@@ -1668,7 +1691,7 @@ ontos:promotedBy a owl:DatatypeProperty ;
 #
 # ontos:customer-master-dataset ontos:hasTable ontos:customer-table .
 #
-# ontos:customer-id-col a ontos:PhysicalColumn ;
+# ontos:customer-id-col a ontos:Column ;
 #     ontos:name "customer_id" ;
 #     ontos:columnDataType "STRING" ;
 #     ontos:isPrimaryKey true ;

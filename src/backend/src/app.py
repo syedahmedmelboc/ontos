@@ -58,6 +58,7 @@ from src.routes import (
     teams_routes,
     projects_routes,
     connection_routes,
+    schema_import_routes,
     costs_routes,
     workflows_routes,
     assets_routes,
@@ -251,6 +252,7 @@ openapi_tags = [
     {"name": "Self Service", "description": "Self-service data product creation"},
     {"name": "Settings", "description": "Application settings and configuration"},
     {"name": "Connections", "description": "Manage external data platform connections"},
+    {"name": "Schema Import", "description": "Browse remote systems and import schemas as Ontos assets"},
 ]
 
 # Create single FastAPI app with settings dependency
@@ -351,6 +353,7 @@ self_service_routes.register_routes(app)
 workflows_routes.register_routes(app)
 settings_routes.register_routes(app)
 connection_routes.register_routes(app)
+schema_import_routes.register_routes(app)
 
 # Define other specific API routes BEFORE the catch-all
 @app.get("/api/time")

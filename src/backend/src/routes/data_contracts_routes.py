@@ -1138,7 +1138,7 @@ async def auto_link_contract_schema_to_assets(
     manager: DataContractsManager = Depends(get_data_contracts_manager),
     _: bool = Depends(PermissionChecker('data-contracts', FeatureAccessLevel.READ_WRITE)),
 ):
-    """Auto-link contract schema objects to matching PhysicalTable/PhysicalView assets.
+    """Auto-link contract schema objects to matching Table/View assets.
 
     Creates implementsContract relationships from assets to this contract,
     and governedBy relationships from parent datasets.

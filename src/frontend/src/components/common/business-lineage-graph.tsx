@@ -48,9 +48,10 @@ const TYPE_COLOR: Record<string, { bg: string; border: string; text: string; min
   Dataset:          { bg: 'bg-amber-500/10',    border: 'border-amber-500/40',   text: 'text-amber-600 dark:text-amber-400',    minimap: '#f59e0b' },
   DeliveryChannel:  { bg: 'bg-cyan-500/10',     border: 'border-cyan-500/40',    text: 'text-cyan-600 dark:text-cyan-400',      minimap: '#06b6d4' },
   Policy:           { bg: 'bg-red-500/10',      border: 'border-red-500/40',     text: 'text-red-600 dark:text-red-400',        minimap: '#ef4444' },
-  PhysicalTable:    { bg: 'bg-orange-500/10',   border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400',  minimap: '#f97316' },
-  PhysicalView:     { bg: 'bg-teal-500/10',     border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400',      minimap: '#14b8a6' },
-  PhysicalColumn:   { bg: 'bg-slate-500/10',    border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400',    minimap: '#64748b' },
+  Table:            { bg: 'bg-orange-500/10',   border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400',  minimap: '#f97316' },
+  View:             { bg: 'bg-teal-500/10',     border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400',      minimap: '#14b8a6' },
+  Column:           { bg: 'bg-slate-500/10',    border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400',    minimap: '#64748b' },
+  Schema:           { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',  minimap: '#8b5cf6' },
   DataContract:     { bg: 'bg-pink-500/10',     border: 'border-pink-500/40',    text: 'text-pink-600 dark:text-pink-400',      minimap: '#ec4899' },
 };
 

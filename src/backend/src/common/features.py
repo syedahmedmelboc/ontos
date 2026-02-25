@@ -190,6 +190,11 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'name': 'Entity Subscriptions',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS
     },
+    # Schema Import
+    'schema-importer': {
+        'name': 'Schema Importer',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
     # 'about': { ... } # About page doesn't need explicit permissions here
 
 }

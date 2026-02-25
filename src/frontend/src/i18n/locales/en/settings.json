@@ -34,6 +34,7 @@
     "general": "General",
     "uiCustomization": "UI Customization",
     "connectors": "Connectors",
+    "schemaImporter": "Schema Importer",
     "jobs": "Jobs",
     "deliveryModes": "Delivery Modes",
     "git": "Git Integration",
@@ -101,7 +102,8 @@
     "mcpTokens": "MCP Tokens",
     "workflows": "Workflows",
     "uiCustomization": "UI Customization",
-    "connectors": "Connectors"
+    "connectors": "Connectors",
+    "schemaImporter": "Schema Importer"
   },
   "accessDenied": {
     "title": "Access Denied",
@@ -520,5 +522,9 @@
       "testError": "Connection test error",
       "deleteSuccess": "Connection deleted"
     }
+  },
+  "schemaImporter": {
+    "title": "Schema Importer",
+    "description": "Browse remote systems and import their structure as Ontos assets."
   }
 }

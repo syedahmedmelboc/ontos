@@ -47,6 +47,7 @@ import {
   Network,
   BookMarked,
   Wrench,
+  Import,
 } from 'lucide-react';
 
 export interface PersonaNavItem {
@@ -105,6 +106,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'master-data', labelKey: 'personaNav.masterData', path: '/steward/master-data', icon: Database, featureId: 'master-data', group: 'govern' },
     // -- TOOLS --
     { id: 'commander', labelKey: 'personaNav.catalogCommander', path: '/steward/commander', icon: FolderKanban, featureId: 'catalog-commander', group: 'tools' },
+    { id: 'schema-importer', labelKey: 'personaNav.schemaImporter', path: '/steward/schema-importer', icon: Import, featureId: 'schema-importer', group: 'tools' },
   ],
   data_governance_officer: [
     // -- ORGANIZE --
@@ -129,6 +131,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'rdf-sources', labelKey: 'personaNav.rdfSources', path: '/governance/rdf-sources', icon: Settings, featureId: 'semantic-models', group: 'advanced' },
     { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets', group: 'advanced' },
     { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings', group: 'advanced' },
+    { id: 'schema-importer', labelKey: 'personaNav.schemaImporter', path: '/governance/schema-importer', icon: Import, featureId: 'schema-importer', group: 'advanced' },
   ],
   security_officer: [
     // -- ACCESS CONTROL --
@@ -145,6 +148,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'general', labelKey: 'personaNav.general', path: '/admin/general', icon: Settings, featureId: 'settings', group: 'configuration' },
     { id: 'ui', labelKey: 'personaNav.uiCustomization', path: '/admin/ui', icon: Palette, featureId: 'settings', group: 'configuration' },
     { id: 'connectors', labelKey: 'personaNav.connectors', path: '/admin/connectors', icon: Plug, featureId: 'settings', group: 'configuration' },
+    { id: 'schema-importer', labelKey: 'personaNav.schemaImporter', path: '/admin/schema-importer', icon: Import, featureId: 'schema-importer', group: 'configuration' },
     // -- AUTOMATION --
     { id: 'jobs', labelKey: 'personaNav.jobs', path: '/admin/jobs', icon: Briefcase, featureId: 'settings', group: 'automation' },
     { id: 'delivery', labelKey: 'personaNav.deliveryModes', path: '/admin/delivery', icon: Truck, featureId: 'settings', group: 'automation' },

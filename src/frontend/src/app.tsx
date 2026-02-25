@@ -72,6 +72,7 @@ import OwnerConsumersView from './views/owner-consumers';
 import CollectionsView from './views/collections';
 import SettingsSemanticModelsView from './views/settings-semantic-models';
 import HierarchyBrowserView from './views/hierarchy-browser';
+import SchemaImporterView from './views/schema-importer';
 
 /** Syncs the URL prefix to the persona store so direct navigation works. */
 function PersonaUrlSync() {
@@ -176,6 +177,7 @@ export default function App() {
               <Route path="/steward/reviews/:requestId" element={<DataAssetReviewDetails />} />
               <Route path="/steward/master-data" element={<MasterDataManagement />} />
               <Route path="/steward/commander" element={<CatalogCommander />} />
+              <Route path="/steward/schema-importer" element={<SchemaImporterView />} />
               {/* Legacy steward paths */}
               <Route path="/steward/hierarchy" element={<HierarchyBrowserView />} />
 
@@ -205,6 +207,7 @@ export default function App() {
               <Route path="/governance/kg" element={<OntologySearchView />} />
               <Route path="/governance/asset-types" element={<AssetTypesView />} />
               <Route path="/governance/tags" element={<SettingsTagsView />} />
+              <Route path="/governance/schema-importer" element={<SchemaImporterView />} />
               {/* Legacy governance paths */}
               <Route path="/governance/projects" element={<Navigate to="/governance/teams" replace />} />
               <Route path="/governance/hierarchy" element={<HierarchyBrowserView />} />
@@ -247,6 +250,7 @@ export default function App() {
               <Route path="/admin/search" element={<SettingsSearchView />} />
               <Route path="/admin/mcp" element={<SettingsMcpView />} />
               <Route path="/admin/connectors" element={<SettingsConnectorsView />} />
+              <Route path="/admin/schema-importer" element={<SchemaImporterView />} />
               <Route path="/admin/tags" element={<SettingsTagsView />} />
               <Route path="/admin/audit" element={<AuditTrail />} />
               <Route path="/admin/about" element={<About />} />

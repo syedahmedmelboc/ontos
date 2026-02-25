@@ -61,9 +61,10 @@ def get_link_candidates(
         asset_type = db.query(AssetTypeDb).filter(AssetTypeDb.name == target_type).first()
         if not asset_type:
             label_map = {
-                "PhysicalTable": "Table",
-                "PhysicalView": "View",
-                "PhysicalColumn": "Column",
+                "Table": "Table",
+                "View": "View",
+                "Column": "Column",
+                "Schema": "Schema",
                 "BusinessTerm": "Business Term",
                 "LogicalEntity": "Logical Entity",
                 "LogicalAttribute": "Logical Attribute",

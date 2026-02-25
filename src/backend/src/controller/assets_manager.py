@@ -77,6 +77,9 @@ class AssetsManager(SearchableAsset):
         except Exception:
             return
 
+        if not schema_def:
+            return
+
         json_schema = schema_def.json_schema
         if not json_schema:
             return

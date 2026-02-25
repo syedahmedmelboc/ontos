@@ -121,9 +121,9 @@ export default function AssetDetailView() {
       'Logical Entity': 'LogicalEntity',
       'Logical Attribute': 'LogicalAttribute',
       'Delivery Channel': 'DeliveryChannel',
-      'Table': 'PhysicalTable',
-      'View': 'PhysicalView',
-      'Column': 'PhysicalColumn',
+      'Table': 'Table',
+      'View': 'View',
+      'Column': 'Column',
       'ML Model': 'MLModel',
       'API Endpoint': 'APIEndpoint',
     };

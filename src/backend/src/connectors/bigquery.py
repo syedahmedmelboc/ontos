@@ -340,9 +340,11 @@ class BigQueryConnector(AssetConnector):
         List BigQuery assets.
 
         Path semantics (dot-separated):
-          - ""             -> list datasets in the configured project
-          - "project"      -> list datasets in that project
-          - "project.dataset" -> list tables / views / routines / models
+          - ""                     -> list datasets in the configured project
+          - "project"              -> list datasets in that project
+          - "project.dataset"      -> list tables / views / routines / models
+          - "project.dataset.table" -> empty (table is a leaf; columns come
+                                       from get_asset_metadata().schema_info)
         """
         client = self._ensure_client()
         options = options or ListAssetsOptions()
@@ -356,7 +358,7 @@ class BigQueryConnector(AssetConnector):
             if len(parts) <= 1:
                 project = parts[0] if parts and parts[0] else client.project
                 results.extend(self._list_datasets(client, project, options, limit))
-            elif len(parts) >= 2:
+            elif len(parts) == 2:
                 project = parts[0]
                 dataset = parts[1]
                 asset_types = options.asset_types
@@ -387,6 +389,8 @@ class BigQueryConnector(AssetConnector):
                                 client, project, dataset, options, limit - len(results)
                             )
                         )
+            # len(parts) >= 3 means a specific table/view/routine — leaf node,
+            # no children to list (columns are in schema_info, not listed here)
 
             return results[:limit]
 
@@ -865,6 +869,9 @@ class BigQueryConnector(AssetConnector):
                     })
             else:
                 parts = parent_path.split(".")
+                # 3+ parts = table-level path — no container children
+                if len(parts) >= 3:
+                    return containers
                 project = parts[0] if parts else client.project
                 dataset = parts[1] if len(parts) > 1 else parts[0]
                 dataset_ref = bigquery.DatasetReference(project, dataset)

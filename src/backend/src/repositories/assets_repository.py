@@ -119,6 +119,26 @@ class AssetRepository(CRUDBase[AssetDb, AssetCreate, AssetUpdate]):
             db.rollback()
             raise
 
+    def get_by_identity(
+        self, db: Session, *, name: str, asset_type_id: UUID, platform: str, location: str,
+    ) -> Optional[AssetDb]:
+        """Gets an asset by its full identity (matches the uq_asset_identity constraint)."""
+        try:
+            return (
+                db.query(self.model)
+                .filter(
+                    self.model.name == name,
+                    self.model.asset_type_id == asset_type_id,
+                    self.model.platform == platform,
+                    self.model.location == location,
+                )
+                .first()
+            )
+        except SQLAlchemyError as e:
+            logger.error(f"Database error fetching asset by identity: {e}", exc_info=True)
+            db.rollback()
+            raise
+
 
 class AssetRelationshipRepository(CRUDBase[AssetRelationshipDb, AssetRelationshipCreate, AssetRelationshipCreate]):
     def __init__(self):

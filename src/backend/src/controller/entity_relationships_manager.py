@@ -526,7 +526,7 @@ class EntityRelationshipsManager:
         "Policy", "DataDomain",
     }
     TECHNICAL_TYPES = {
-        "PhysicalTable", "PhysicalView", "PhysicalColumn", "DataContract",
+        "Table", "View", "Column", "DataContract",
     }
 
     def get_business_lineage(
