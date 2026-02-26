@@ -24,6 +24,8 @@ class EntityFieldDefinition(BaseModel):
 
 class EntityTypeDefinition(BaseModel):
     """An entity type (class) defined in the ontology with its UI metadata."""
+    model_config = {"protected_namespaces": ()}
+
     iri: str = Field(..., description="Full IRI of the class (e.g. http://ontos.app/ontology#Dataset)")
     local_name: str = Field(..., description="Short name (e.g. 'Dataset')")
     label: str = Field(..., description="Human-readable label from rdfs:label")
@@ -39,6 +41,8 @@ class EntityTypeDefinition(BaseModel):
 
 class EntityTypeSchema(BaseModel):
     """Complete field schema for an entity type, suitable for driving a dynamic form."""
+    model_config = {"protected_namespaces": ()}
+
     type_iri: str
     type_label: str
     model_tier: str
@@ -70,6 +74,8 @@ class EntityRelationships(BaseModel):
 
 class EntityHierarchyNode(BaseModel):
     """A node in the class hierarchy tree."""
+    model_config = {"protected_namespaces": ()}
+
     iri: str
     label: str
     model_tier: Optional[str] = None

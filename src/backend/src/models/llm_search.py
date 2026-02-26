@@ -280,6 +280,8 @@ class ChatResponse(BaseModel):
 
 class LLMSearchStatus(BaseModel):
     """Status of the LLM search feature."""
+    model_config = {"protected_namespaces": ()}
+
     enabled: bool = Field(..., description="Whether LLM search is enabled")
     endpoint: Optional[str] = Field(None, description="Configured LLM endpoint")
     model_name: Optional[str] = Field(None, description="Name of the configured foundation model")
