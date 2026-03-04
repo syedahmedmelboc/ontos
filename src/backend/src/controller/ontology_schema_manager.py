@@ -254,9 +254,10 @@ class OntologySchemaManager:
             if f.is_required:
                 required.append(f.name)
 
+        safe_id = type_iri.replace("#", "/")
         schema: Dict[str, Any] = {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "$id": type_iri,
+            "$id": safe_id,
             "title": label,
             "type": "object",
             "properties": properties,
