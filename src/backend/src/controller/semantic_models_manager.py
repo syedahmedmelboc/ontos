@@ -513,19 +513,19 @@ class SemanticModelsManager:
             if isinstance(obj, BNode):
                 object_value = self._skolemize_bnode(obj, context_name)
                 object_is_uri = True
-                object_language = None
-                object_datatype = None
+                object_language = ''
+                object_datatype = ''
             elif isinstance(obj, Literal):
                 object_value = str(obj)
                 object_is_uri = False
-                object_language = obj.language if obj.language else None
-                object_datatype = str(obj.datatype) if obj.datatype else None
+                object_language = obj.language if obj.language else ''
+                object_datatype = str(obj.datatype) if obj.datatype else ''
             else:
                 # URIRef
                 object_value = str(obj)
                 object_is_uri = True
-                object_language = None
-                object_datatype = None
+                object_language = ''
+                object_datatype = ''
             
             triples_to_insert.append({
                 'subject_uri': subject_uri,
