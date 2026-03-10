@@ -8,7 +8,8 @@
     "viewGraph": "View Graph",
     "searchGraph": "Search Graph",
     "concepts": "Concepts",
-    "properties": "Properties"
+    "properties": "Properties",
+    "knowledgeGraph": "Knowledge Graph"
   },
   "subtitles": {
     "searchConcepts": "Search and browse ontology concepts and properties",

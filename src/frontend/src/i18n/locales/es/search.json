@@ -6,7 +6,8 @@
     "indexSearch": "Búsqueda de Índice",
     "viewGraph": "Ver Grafo",
     "searchGraph": "Buscar Grafo",
-    "concepts": "Conceptos"
+    "concepts": "Conceptos",
+    "knowledgeGraph": "Grafo de Conocimiento"
   },
   "noResults": "No se encontraron resultados",
   "noResultsHint": "Intenta ajustar tus términos de búsqueda o filtros",

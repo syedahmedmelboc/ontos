@@ -76,9 +76,9 @@ export default function PropertiesSearch({
     if (currentQuery) params.set('query', currentQuery);
     if (currentIri) params.set('iri', currentIri);
 
+    params.set('tab', 'properties');
     const queryString = params.toString();
-    const newUrl = queryString ? `/ontology?${queryString}` : '/ontology';
-    navigate(newUrl, { replace: true });
+    navigate(`${location.pathname}?${queryString}`, { replace: true });
   };
 
   useEffect(() => {

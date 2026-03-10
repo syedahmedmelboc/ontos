@@ -6,7 +6,8 @@
     "indexSearch": "Index Zoeken",
     "viewGraph": "Grafiek Bekijken",
     "searchGraph": "Grafiek Zoeken",
-    "concepts": "Concepten"
+    "concepts": "Concepten",
+    "knowledgeGraph": "Kennisgraaf"
   },
   "noResults": "Geen resultaten gevonden",
   "noResultsHint": "Probeer je zoektermen of filters aan te passen",

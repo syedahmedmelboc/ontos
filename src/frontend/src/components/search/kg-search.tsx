@@ -171,9 +171,9 @@ export default function KGSearch({
     if (newDirection && newDirection !== 'all') params.set('direction', newDirection);
     if (newConceptsOnly) params.set('concepts_only', 'true');
 
+    params.set('tab', 'kg');
     const queryString = params.toString();
-    const newUrl = queryString ? `/ontology?${queryString}` : '/ontology';
-    navigate(newUrl, { replace: true });
+    navigate(`${location.pathname}?${queryString}`, { replace: true });
   };
 
   // Load initial state from URL
