@@ -29,6 +29,7 @@
 --     0001 = HLS (demo_data_hls.sql)
 --     0002 = FSI (demo_data_fsi.sql)
 --     0003 = MFG (demo_data_mfg.sql)
+--     0004 = AUTO (demo_data_auto.sql)
 --   N     = record sequence (decimal, mirrors yyyyy)
 --
 -- Type Codes:

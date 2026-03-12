@@ -385,7 +385,7 @@ async def load_demo_data(
     manager: SettingsManager = Depends(get_settings_manager),
     industry: Optional[List[str]] = Query(
         default=None,
-        description="Optional industry-specific demo data to load (e.g. 'hls', 'fsi', 'mfg'). "
+        description="Optional industry-specific demo data to load (e.g. 'hls', 'fsi', 'mfg', 'auto'). "
                     "Loads demo_data_{industry}.sql in addition to the base demo_data.sql. "
                     "Pass multiple values to load several industries.",
     ),
