@@ -178,6 +178,8 @@ async def startup_event():
                 continue
         app.state.search_manager = SearchManager(searchable_managers=searchable_managers_instances)
         app.state.search_manager.build_index()
+        for mgr in searchable_managers_instances:
+            mgr.set_search_manager(app.state.search_manager)
         logger.info("Search index initialized and built from DB-backed managers (app.py).")
     except Exception as e:
         logger.error(f"Failed initializing or building search index in app.py: {e}", exc_info=True)

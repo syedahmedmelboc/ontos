@@ -448,6 +448,8 @@ async def startup_event_handler(app: FastAPI):
 
             app.state.search_manager = SearchManager(searchable_managers=searchable_managers_instances)
             app.state.search_manager.build_index()
+            for mgr in searchable_managers_instances:
+                mgr.set_search_manager(app.state.search_manager)
             logger.info("Search index initialized and built from DB-backed managers.")
         except Exception as e:
             logger.error(f"Failed initializing or building search index: {e}", exc_info=True)

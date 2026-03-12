@@ -224,6 +224,7 @@ class AssetsManager(SearchableAsset):
                 )
             except Exception as e:
                 logger.warning(f"Failed to log change for asset creation: {e}")
+            self._update_search_index(db_asset)
             return self._asset_to_read(db_asset)
         except IntegrityError as e:
             db.rollback()
@@ -291,6 +292,7 @@ class AssetsManager(SearchableAsset):
                 )
             except Exception as e:
                 logger.warning(f"Failed to log change for asset update: {e}")
+            self._update_search_index(updated)
             return self._asset_to_read(updated)
         except IntegrityError as e:
             db.rollback()
@@ -305,6 +307,7 @@ class AssetsManager(SearchableAsset):
 
         read = self._asset_to_read(db_asset)
         self._asset_repo.remove(db=db, id=asset_id)
+        self._notify_index_remove(f"asset::{asset_id}")
         logger.info(f"Deleted asset '{read.name}' (id: {asset_id})")
         try:
             change_log_manager.log_change_with_details(
@@ -366,6 +369,34 @@ class AssetsManager(SearchableAsset):
     # SearchableAsset implementation
     # ------------------------------------------------------------------
 
+    def _build_search_index_item(self, asset_db_obj: AssetDb) -> Optional[SearchIndexItem]:
+        """Convert a single asset DB object to a SearchIndexItem. Returns None for retired assets."""
+        if asset_db_obj.status == 'retired':
+            return None
+        type_name = asset_db_obj.asset_type.name if asset_db_obj.asset_type else 'Asset'
+        tags = asset_db_obj.tags if isinstance(asset_db_obj.tags, list) else []
+        return SearchIndexItem(
+            id=f"asset::{asset_db_obj.id}",
+            type=f"asset-{type_name.lower().replace(' ', '-')}",
+            title=asset_db_obj.name,
+            description=asset_db_obj.description or '',
+            link=f"/governance/assets/{asset_db_obj.id}",
+            tags=tags,
+            feature_id="assets",
+            extra_data={
+                "asset_type": type_name,
+                "platform": asset_db_obj.platform or '',
+                "status": asset_db_obj.status or '',
+                "domain_id": str(asset_db_obj.domain_id) if asset_db_obj.domain_id else '',
+            },
+        )
+
+    def _update_search_index(self, asset_db_obj: AssetDb) -> None:
+        """Upsert a single asset in the search index."""
+        item = self._build_search_index_item(asset_db_obj)
+        if item is not None:
+            self._notify_index_upsert(item)
+
     def get_search_index_items(self) -> List[SearchIndexItem]:
         """Index all active assets for unified search."""
         logger.info("AssetsManager: Fetching assets for search indexing...")
@@ -379,24 +410,9 @@ class AssetsManager(SearchableAsset):
             with session_factory() as db:
                 all_assets = db.query(AssetDb).filter(AssetDb.status != 'retired').all()
                 for a in all_assets:
-                    type_name = a.asset_type.name if a.asset_type else 'Asset'
-                    tags = a.tags if isinstance(a.tags, list) else []
-
-                    items.append(SearchIndexItem(
-                        id=f"asset::{a.id}",
-                        type=f"asset-{type_name.lower().replace(' ', '-')}",
-                        title=a.name,
-                        description=a.description or '',
-                        link=f"/governance/assets/{a.id}",
-                        tags=tags,
-                        feature_id="assets",
-                        extra_data={
-                            "asset_type": type_name,
-                            "platform": a.platform or '',
-                            "status": a.status or '',
-                            "domain_id": str(a.domain_id) if a.domain_id else '',
-                        },
-                    ))
+                    item = self._build_search_index_item(a)
+                    if item is not None:
+                        items.append(item)
 
                 logger.info(f"Indexed {len(items)} assets for search.")
         except Exception as e:

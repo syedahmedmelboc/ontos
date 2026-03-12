@@ -186,6 +186,7 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 background_tasks=background_tasks,
             )
             
+            self._update_search_index(result)
             return result
 
         except SQLAlchemyError as e:
@@ -335,6 +336,7 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 background_tasks=background_tasks,
             )
             
+            self._update_search_index(result)
             return result
 
         except SQLAlchemyError as e:
@@ -453,6 +455,8 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                     )
                 except Exception as log_err:
                     logger.warning(f"Failed to log change for product deletion: {log_err}")
+                
+                self._notify_index_remove(f"product::{product_id}")
             
             return deleted_obj is not None
         except SQLAlchemyError as e:
@@ -558,7 +562,9 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 new_status=new_status_lower
             )
             
-            return self._load_product_with_tags(product_db)
+            result = self._load_product_with_tags(product_db)
+            self._update_search_index(result)
+            return result
             
         except SQLAlchemyError as e:
             logger.error(f"Database error transitioning product {product_id} status: {e}")
@@ -1286,7 +1292,9 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
             created_db_obj = self._repo.create(db=self._db, obj_in=new_product_api_model)
 
             logger.info(f"Successfully created new version {request.new_version} (ID: {created_db_obj.id})")
-            return DataProductApi.model_validate(created_db_obj)
+            result = DataProductApi.model_validate(created_db_obj)
+            self._update_search_index(result)
+            return result
 
         except ValidationError as e:
             logger.error(f"Validation error creating new ODPS version: {e}")
@@ -1950,98 +1958,94 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
 
     # --- SearchableAsset implementation ---
 
+    def _build_search_index_item(self, product: DataProductApi) -> Optional[SearchIndexItem]:
+        """Convert a single DataProduct API model to a SearchIndexItem."""
+        if not product.id or not product.name:
+            return None
+
+        description = ""
+        if product.description:
+            parts = []
+            if product.description.purpose:
+                parts.append(product.description.purpose)
+            if product.description.usage:
+                parts.append(product.description.usage)
+            description = " | ".join(parts)
+
+        tag_strings: List[str] = []
+        try:
+            for t in (product.tags or []):
+                if hasattr(t, 'fully_qualified_name') and t.fully_qualified_name:
+                    tag_strings.append(t.fully_qualified_name)
+                elif isinstance(t, dict):
+                    fqn = t.get('fully_qualified_name') or t.get('tag_fqn')
+                    if fqn:
+                        tag_strings.append(str(fqn))
+                elif hasattr(t, 'tag_name') and t.tag_name:
+                    tag_strings.append(str(t.tag_name))
+                else:
+                    tag_strings.append(str(t))
+        except Exception:
+            tag_strings = []
+
+        owner_team_name = ""
+        if product.owner_team_id:
+            try:
+                from uuid import UUID
+                owner_team = team_repo.get(self._db, id=UUID(product.owner_team_id))
+                if owner_team:
+                    owner_team_name = owner_team.name or ""
+            except Exception as e:
+                logger.debug(f"Could not resolve owner_team_id {product.owner_team_id}: {e}")
+
+        product_team_name = product.team.name if product.team and product.team.name else ""
+        team_member_names: List[str] = []
+        if product.team and product.team.members:
+            for member in product.team.members:
+                if member.name:
+                    team_member_names.append(member.name)
+                if member.username and member.username != member.name:
+                    team_member_names.append(member.username)
+
+        extra_data = {
+            "status": product.status or "",
+            "version": product.version or "",
+            "domain": product.domain or "",
+            "owner": owner_team_name or product_team_name,
+            "owner_team": owner_team_name,
+            "product_team": product_team_name,
+            "team_members": ", ".join(team_member_names),
+        }
+
+        return SearchIndexItem(
+            id=f"product::{product.id}",
+            type="data-product",
+            feature_id="data-products",
+            title=product.name,
+            description=description,
+            link=f"/data-products/{product.id}",
+            tags=tag_strings,
+            extra_data=extra_data,
+        )
+
+    def _update_search_index(self, product: DataProductApi) -> None:
+        """Build a SearchIndexItem from a product and upsert it into the index."""
+        item = self._build_search_index_item(product)
+        if item:
+            self._notify_index_upsert(item)
+
     def get_search_index_items(self) -> List[SearchIndexItem]:
         """Fetches ODPS v1.0.0 data products and maps them to SearchIndexItem format."""
         logger.info("Fetching ODPS products for search indexing...")
         items = []
-
         try:
             products_api = self.list_products(limit=10000)
-
             for product in products_api:
-                if not product.id or not product.name:
-                    logger.warning(f"Skipping ODPS product due to missing id or name: {product}")
-                    continue
-
-                # Get description from ODPS structured description
-                description = ""
-                if product.description:
-                    parts = []
-                    if product.description.purpose:
-                        parts.append(product.description.purpose)
-                    if product.description.usage:
-                        parts.append(product.description.usage)
-                    description = " | ".join(parts)
-
-                # Normalize tags - extract FQN from AssignedTag objects or dicts
-                tag_strings: List[str] = []
-                try:
-                    for t in (product.tags or []):
-                        # AssignedTag Pydantic model
-                        if hasattr(t, 'fully_qualified_name') and t.fully_qualified_name:
-                            tag_strings.append(t.fully_qualified_name)
-                        # Dict with tag_fqn or fully_qualified_name
-                        elif isinstance(t, dict):
-                            fqn = t.get('fully_qualified_name') or t.get('tag_fqn')
-                            if fqn:
-                                tag_strings.append(str(fqn))
-                        # Fallback: try tag_name attribute or string conversion
-                        elif hasattr(t, 'tag_name') and t.tag_name:
-                            tag_strings.append(str(t.tag_name))
-                        else:
-                            tag_strings.append(str(t))
-                except Exception:
-                    tag_strings = []
-
-                # Get owner team name from owner_team_id (organizational team)
-                owner_team_name = ""
-                if product.owner_team_id:
-                    try:
-                        from uuid import UUID
-                        owner_team = team_repo.get(self._db, id=UUID(product.owner_team_id))
-                        if owner_team:
-                            owner_team_name = owner_team.name or ""
-                    except Exception as e:
-                        logger.debug(f"Could not resolve owner_team_id {product.owner_team_id}: {e}")
-
-                # Get product team name and member names
-                product_team_name = product.team.name if product.team and product.team.name else ""
-                team_member_names: List[str] = []
-                if product.team and product.team.members:
-                    for member in product.team.members:
-                        if member.name:
-                            team_member_names.append(member.name)
-                        if member.username and member.username != member.name:
-                            team_member_names.append(member.username)
-
-                # Build extra_data for configurable search fields
-                # Include both owner_team (organizational) and product team info
-                extra_data = {
-                    "status": product.status or "",
-                    "version": product.version or "",
-                    "domain": product.domain or "",
-                    "owner": owner_team_name or product_team_name,  # Prefer organizational team
-                    "owner_team": owner_team_name,
-                    "product_team": product_team_name,
-                    "team_members": ", ".join(team_member_names),
-                }
-
-                items.append(
-                    SearchIndexItem(
-                        id=f"product::{product.id}",
-                        type="data-product",
-                        feature_id="data-products",
-                        title=product.name,
-                        description=description,
-                        link=f"/data-products/{product.id}",
-                        tags=tag_strings,
-                        extra_data=extra_data,
-                    )
-                )
-
+                item = self._build_search_index_item(product)
+                if item:
+                    items.append(item)
             logger.info(f"Prepared {len(items)} ODPS products for search index.")
             return items
-
         except Exception as e:
             logger.error(f"Error fetching/mapping ODPS products for search: {e}", exc_info=True)
             return []

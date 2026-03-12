@@ -435,6 +435,96 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         }
 
     # --- Implementation of SearchableAsset --- 
+
+    def _build_search_index_item(self, contract_db_obj, db) -> Optional[SearchIndexItem]:
+        """Build a SearchIndexItem from a contract DB object. Returns None if id or name missing."""
+        contract_id = getattr(contract_db_obj, 'id', None)
+        name = getattr(contract_db_obj, 'name', None)
+        if not contract_id or not name:
+            logger.warning(f"Skipping contract due to missing id or name: {contract_db_obj}")
+            return None
+
+        # Build a concise description from available fields
+        version = getattr(contract_db_obj, 'version', None)
+        status = getattr(contract_db_obj, 'status', None)
+        description_usage = getattr(contract_db_obj, 'description_usage', None)
+        desc_parts: List[str] = []
+        if version:
+            desc_parts.append(str(version))
+        if status:
+            desc_parts.append(str(status))
+        if description_usage:
+            desc_parts.append(str(description_usage))
+        description = " \u2022 ".join([p for p in desc_parts if p])
+
+        # Collect tags from BOTH sources:
+        # 1. Legacy ODCS tags (DataContractTagDb) - from imported contracts
+        # 2. Unified tag system (EntityTagAssociationDb) - app-assigned tags
+        tag_names: List[str] = []
+        
+        # 1. Legacy ODCS tags from contract import
+        try:
+            if getattr(contract_db_obj, 'tags', None):
+                for t in contract_db_obj.tags:
+                    # DataContractTagDb has simple 'name' field for ODCS tags
+                    if getattr(t, 'name', None):
+                        tag_names.append(t.name)
+        except Exception:
+            pass
+        
+        # 2. Unified tag system (EntityTagAssociationDb)
+        try:
+            from src.repositories.tags_repository import entity_tag_repo
+            assigned_tags = entity_tag_repo.get_assigned_tags_for_entity(
+                db=db,
+                entity_id=str(contract_id),
+                entity_type="data_contract"
+            )
+            for tag in assigned_tags:
+                if hasattr(tag, 'fully_qualified_name') and tag.fully_qualified_name:
+                    tag_names.append(tag.fully_qualified_name)
+        except Exception as tag_err:
+            logger.debug(f"Could not load unified tags for contract {contract_id}: {tag_err}")
+
+        # Build extra_data for configurable search fields
+        owner = ""
+        try:
+            if getattr(contract_db_obj, 'owner_team', None) and getattr(contract_db_obj.owner_team, 'name', None):
+                owner = contract_db_obj.owner_team.name
+        except Exception:
+            pass
+
+        domain = ""
+        try:
+            if getattr(contract_db_obj, 'domain', None) and getattr(contract_db_obj.domain, 'name', None):
+                domain = contract_db_obj.domain.name
+        except Exception:
+            pass
+
+        extra_data = {
+            "version": str(version) if version else "",
+            "status": str(status) if status else "",
+            "owner": owner,
+            "domain": domain,
+        }
+
+        return SearchIndexItem(
+            id=f"contract::{contract_id}",
+            type="data-contract",
+            feature_id="data-contracts",
+            title=name,
+            description=description or "",
+            link=f"/data-contracts/{contract_id}",
+            tags=tag_names,
+            extra_data=extra_data,
+        )
+
+    def _update_search_index(self, contract_db_obj, db) -> None:
+        """Upsert a single contract into the search index."""
+        item = self._build_search_index_item(contract_db_obj, db)
+        if item:
+            self._notify_index_upsert(item)
+
     def get_search_index_items(self) -> List[SearchIndexItem]:
         """Fetches data contracts from the database and maps them to SearchIndexItem format."""
         logger.info("Fetching data contracts for search indexing (DB-backed)...")
@@ -449,88 +539,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 # Fetch a generous number; adjust if needed
                 contracts_db = data_contract_repo.get_multi(db=db, limit=10000)
                 for contract_db in contracts_db:
-                    contract_id = getattr(contract_db, 'id', None)
-                    name = getattr(contract_db, 'name', None)
-                    if not contract_id or not name:
-                        logger.warning(f"Skipping contract due to missing id or name: {contract_db}")
-                        continue
-
-                    # Build a concise description from available fields
-                    version = getattr(contract_db, 'version', None)
-                    status = getattr(contract_db, 'status', None)
-                    description_usage = getattr(contract_db, 'description_usage', None)
-                    desc_parts: List[str] = []
-                    if version:
-                        desc_parts.append(str(version))
-                    if status:
-                        desc_parts.append(str(status))
-                    if description_usage:
-                        desc_parts.append(str(description_usage))
-                    description = " \u2022 ".join([p for p in desc_parts if p])
-
-                    # Collect tags from BOTH sources:
-                    # 1. Legacy ODCS tags (DataContractTagDb) - from imported contracts
-                    # 2. Unified tag system (EntityTagAssociationDb) - app-assigned tags
-                    tag_names: List[str] = []
-                    
-                    # 1. Legacy ODCS tags from contract import
-                    try:
-                        if getattr(contract_db, 'tags', None):
-                            for t in contract_db.tags:
-                                # DataContractTagDb has simple 'name' field for ODCS tags
-                                if getattr(t, 'name', None):
-                                    tag_names.append(t.name)
-                    except Exception:
-                        pass
-                    
-                    # 2. Unified tag system (EntityTagAssociationDb)
-                    try:
-                        from src.repositories.tags_repository import entity_tag_repo
-                        assigned_tags = entity_tag_repo.get_assigned_tags_for_entity(
-                            db=db,
-                            entity_id=str(contract_id),
-                            entity_type="data_contract"
-                        )
-                        for tag in assigned_tags:
-                            if hasattr(tag, 'fully_qualified_name') and tag.fully_qualified_name:
-                                tag_names.append(tag.fully_qualified_name)
-                    except Exception as tag_err:
-                        logger.debug(f"Could not load unified tags for contract {contract_id}: {tag_err}")
-
-                    # Build extra_data for configurable search fields
-                    owner = ""
-                    try:
-                        if getattr(contract_db, 'owner_team', None) and getattr(contract_db.owner_team, 'name', None):
-                            owner = contract_db.owner_team.name
-                    except Exception:
-                        pass
-
-                    domain = ""
-                    try:
-                        if getattr(contract_db, 'domain', None) and getattr(contract_db.domain, 'name', None):
-                            domain = contract_db.domain.name
-                    except Exception:
-                        pass
-
-                    extra_data = {
-                        "version": str(version) if version else "",
-                        "status": str(status) if status else "",
-                        "owner": owner,
-                        "domain": domain,
-                    }
-
-                    items.append(
-                        SearchIndexItem(
-                            id=f"contract::{contract_id}",
-                            type="data-contract",
-                            feature_id="data-contracts",
-                            title=name,
-                            description=description or "",
-                            link=f"/data-contracts/{contract_id}",
-                            tags=tag_names,
-                            extra_data=extra_data,
-                        )
-                    )
+                    item = self._build_search_index_item(contract_db, db)
+                    if item:
+                        items.append(item)
 
             logger.info(f"Prepared {len(items)} data contracts for search index.")
             return items
@@ -2154,6 +2165,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 background_tasks=background_tasks,
             )
             
+            self._update_search_index(created, db)
             return created
             
         except ValueError:
@@ -2372,6 +2384,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 background_tasks=background_tasks,
             )
             
+            self._update_search_index(updated, db)
             return updated
             
         except ValueError:
@@ -2431,6 +2444,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         except Exception as log_err:
             logger.warning(f"Failed to log change for contract deletion: {log_err}")
         
+        self._notify_index_remove(f"contract::{contract_id}")
         return True
     
     def parse_uploaded_file(self, file_content: str, filename: str, content_type: str) -> dict:
@@ -2690,6 +2704,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             
             db.commit()
             db.refresh(created)
+            self._update_search_index(created, db)
             return created
             
         except ValueError:
@@ -4577,6 +4592,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         db.commit()
         db.refresh(clone)
         
+        self._update_search_index(clone, db)
         return clone
     
     # ============================================================================
@@ -4628,6 +4644,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         contract.status = 'proposed'
         db.add(contract)
         db.flush()
+        self._update_search_index(contract, db)
         
         now = datetime.utcnow()
         request_id = str(uuid4())
@@ -5076,6 +5093,8 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             },
         )
         
+        if decision in ('approve', 'reject'):
+            self._update_search_index(contract, db)
         return {"status": contract.status, "message": f"Review decision '{decision}' recorded successfully"}
     
     def handle_publish_response(
@@ -5473,6 +5492,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             contract.updated_at = now
             db.commit()
             db.refresh(contract)
+            self._update_search_index(contract, db)
             
             notification_title = "Status Change Approved"
             notification_desc = f"Your request to change status of contract '{contract.name}' from '{from_status}' to '{target_status}' has been approved."
