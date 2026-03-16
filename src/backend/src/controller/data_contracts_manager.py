@@ -6,6 +6,16 @@ from typing import Dict, List, Optional, Any
 import os
 from pathlib import Path
 
+SOURCE_ID_PROPERTY = "sourceId"
+
+
+def _is_valid_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(value)
+        return True
+    except (ValueError, AttributeError):
+        return False
+
 import yaml
 from sqlalchemy.orm import Session
 
@@ -2602,19 +2612,18 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             # Try to resolve owner as team name
             owner_team_id = self._resolve_team_name_to_id(db, owner_val)
             
-            # Check if ID is provided and not taken
-            provided_id = parsed_odcs.get('id')
-            if provided_id:
-                try:
-                    existing = data_contract_repo.get(db, id=provided_id)
-                    if existing:
-                        provided_id = None
-                except Exception:
-                    provided_id = None
-            
-            # Create main contract record
+            # Preserve original external ID (e.g. URN) as a custom property
+            original_id = parsed_odcs.get('id')
+            if original_id and isinstance(original_id, str) and not _is_valid_uuid(original_id):
+                custom_props = parsed_odcs.get('customProperties') or parsed_odcs.get('custom_properties') or []
+                if isinstance(custom_props, list):
+                    custom_props.append({"property": SOURCE_ID_PROPERTY, "value": original_id})
+                elif isinstance(custom_props, dict):
+                    custom_props[SOURCE_ID_PROPERTY] = original_id
+                parsed_odcs['customProperties'] = custom_props
+
+            # Create main contract record (always use auto-generated UUID)
             db_obj = DataContractDb(
-                id=provided_id if provided_id else None,
                 name=name_val,
                 version=version_val,
                 status=status_val,
