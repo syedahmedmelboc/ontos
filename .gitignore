@@ -50,3 +50,36 @@ licenses.json
 licenses.csv
 
 .cursor/plans/
+
+# ── GSD baseline (auto-generated) ──
+.gsd/activity/
+.gsd/forensics/
+.gsd/runtime/
+.gsd/worktrees/
+.gsd/auto.lock
+.gsd/metrics.json
+.gsd/completed-units.json
+.gsd/STATE.md
+.gsd/gsd.db
+.gsd/DISCUSSION-MANIFEST.json
+.gsd/milestones/**/*-CONTINUE.md
+.gsd/milestones/**/continue.md
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+.env.*
+!.env.example
+.next/
+dist/
+build/
+__pycache__/
+*.pyc
+target/
+vendor/
+*.log
+.cache/
+tmp/
