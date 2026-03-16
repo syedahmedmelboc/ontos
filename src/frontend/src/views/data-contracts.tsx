@@ -35,6 +35,7 @@ export default function DataContracts() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<{ message: string; detail?: string } | null>(null);
   const [odcsPaste, setOdcsPaste] = useState<string>('')
+  const [importingPaste, setImportingPaste] = useState(false)
   const [showErrorDetail, setShowErrorDetail] = useState(false)
 
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
@@ -614,26 +615,41 @@ export default function DataContracts() {
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={odcsPaste}
               onChange={(e) => setOdcsPaste(e.target.value)}
-              onBlur={async () => {
+              disabled={importingPaste}
+            />
+            <Button
+              className="mt-2 w-full"
+              disabled={!odcsPaste.trim() || importingPaste}
+              onClick={async () => {
                 const value = odcsPaste.trim()
                 if (!value) return
+                setImportingPaste(true)
+                setUploadError(null)
                 try {
                   const body = JSON.parse(value)
                   const res = await fetch('/api/data-contracts/odcs/import', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify(body),
                   })
-                  if (!res.ok) throw new Error('Failed to import ODCS JSON')
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => null)
+                    throw new Error(err?.detail?.message || err?.detail || 'Failed to import ODCS JSON')
+                  }
                   await fetchContracts()
                   setOpenUploadDialog(false)
                   setOdcsPaste('')
                   toast({ title: 'Imported', description: 'ODCS JSON imported successfully' })
                 } catch (err) {
                   setUploadError({ message: err instanceof Error ? err.message : 'Failed to import ODCS JSON' })
+                } finally {
+                  setImportingPaste(false)
                 }
               }}
-            />
+            >
+              {importingPaste && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Import JSON
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

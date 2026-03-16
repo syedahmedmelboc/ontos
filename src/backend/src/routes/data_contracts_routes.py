@@ -1117,7 +1117,74 @@ async def get_odcs_schema(_perm: bool = Depends(PermissionChecker('data-contract
         raise HTTPException(status_code=500, detail="Failed to load schema file")
 
 
-# ODCS import functionality now handled by /data-contracts/upload endpoint
+@router.post('/data-contracts/odcs/import')
+async def import_odcs_json(
+    request: Request,
+    db: DBSessionDep,
+    audit_manager: AuditManagerDep,
+    current_user: AuditCurrentUserDep,
+    body: dict = Body(...),
+    manager: DataContractsManager = Depends(get_data_contracts_manager),
+    _: bool = Depends(PermissionChecker('data-contracts', FeatureAccessLevel.READ_WRITE)),
+):
+    """Import an ODCS contract from a pasted JSON object."""
+    success = False
+    details_for_audit: dict = {"params": {"source": "paste"}}
+    created_contract_id = None
+
+    try:
+        contract_text = json.dumps(body)
+
+        parsed = manager.parse_uploaded_file(
+            file_content=contract_text,
+            filename="paste.json",
+            content_type="application/json",
+        )
+
+        validation_warnings = manager.validate_odcs(parsed, strict=False)
+        for warning in validation_warnings[:5]:
+            logger.warning(warning)
+
+        created = manager.create_from_upload(
+            db=db,
+            parsed_odcs=parsed,
+            current_user=current_user.username if current_user else None,
+        )
+
+        success = True
+        created_contract_id = created.id
+
+        created_with_relations = data_contract_repo.get_with_all(db, id=created.id)
+        return manager._build_contract_api_model(db, created_with_relations)
+
+    except ValueError as e:
+        logger.error("Validation error importing ODCS JSON: %s", e)
+        details_for_audit["exception"] = {"type": "ValueError", "message": str(e)}
+        raise HTTPException(status_code=400, detail={
+            "message": "Invalid contract data",
+            "error": str(e),
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("ODCS JSON import failed")
+        details_for_audit["exception"] = {"type": type(e).__name__, "message": str(e)}
+        raise HTTPException(status_code=500, detail={
+            "message": "Import failed",
+            "error": f"{type(e).__name__}: {e}",
+        })
+    finally:
+        if created_contract_id:
+            details_for_audit["created_resource_id"] = created_contract_id
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username if current_user else "anonymous",
+            ip_address=request.client.host if request.client else None,
+            feature="data-contracts",
+            action="IMPORT_ODCS_JSON",
+            success=success,
+            details=details_for_audit,
+        )
 
 
 # --- Lazy Schema / Properties Endpoints ---
