@@ -92,7 +92,10 @@ function PortLinkedAssets({ portId, portName, canEdit }: { portId: string; portN
       const res = await fetch(`/api/entities/OutputPort/${portId}/relationships`);
       if (!res.ok) return;
       const data = await res.json();
-      setRelationships(data || []);
+      const rels = Array.isArray(data)
+        ? data
+        : [...(data.outgoing || []), ...(data.incoming || [])];
+      setRelationships(rels);
     } catch {
       // Silently fail for non-critical display
     } finally {
