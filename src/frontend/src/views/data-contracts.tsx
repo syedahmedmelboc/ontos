@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import TagChip from '@/components/ui/tag-chip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Pencil, Trash2, AlertCircle, Upload, ChevronDown, KeyRound, HelpCircle, FileText, Table2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Upload, ChevronDown, ChevronRight, KeyRound, HelpCircle, FileText, Table2, Loader2, X } from 'lucide-react';
 import { ListViewSkeleton } from '@/components/common/list-view-skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import DataContractBasicFormDialog from '@/components/data-contracts/data-contract-basic-form-dialog'
@@ -33,8 +33,9 @@ export default function DataContracts() {
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [openFromDatasetDialog, setOpenFromDatasetDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<{ message: string; detail?: string } | null>(null);
   const [odcsPaste, setOdcsPaste] = useState<string>('')
+  const [showErrorDetail, setShowErrorDetail] = useState(false)
 
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -201,16 +202,19 @@ export default function DataContracts() {
         });
 
         if (!response.ok) {
-          // Parse error response for detailed message
           let errorMsg = 'Failed to upload contract';
+          let errorDetail: string | undefined;
           try {
             const contentType = response.headers.get('Content-Type');
             if (contentType?.includes('application/json')) {
               const errorBody = await response.json();
               if (errorBody?.detail) {
-                errorMsg = typeof errorBody.detail === 'string' 
-                  ? errorBody.detail 
-                  : errorBody.detail.message || JSON.stringify(errorBody.detail);
+                if (typeof errorBody.detail === 'string') {
+                  errorMsg = errorBody.detail;
+                } else {
+                  errorMsg = errorBody.detail.message || 'Upload failed';
+                  errorDetail = errorBody.detail.error;
+                }
               } else if (errorBody?.message) {
                 errorMsg = errorBody.message;
               }
@@ -221,23 +225,20 @@ export default function DataContracts() {
             // Keep default error message
           }
           
-          // Check if this might be a Data Product file uploaded by mistake
-          const isLikelyODPS = errorMsg.toLowerCase().includes('validation') || 
-            errorMsg.toLowerCase().includes('odps') ||
-            errorMsg.toLowerCase().includes('outputports');
-          
-          if (isLikelyODPS) {
+          const combined = (errorMsg + ' ' + (errorDetail || '')).toLowerCase();
+          if (combined.includes('odps') || combined.includes('outputports')) {
             errorMsg += '\n\nHint: This page is for Data Contracts (ODCS format). If you\'re trying to upload a Data Product (ODPS format), please use the Data Products page instead.';
           }
           
-          throw new Error(errorMsg);
+          setUploadError({ message: errorMsg, detail: errorDetail });
+          return;
         }
 
         await fetchContracts();
         setOpenUploadDialog(false);
         toast({ title: 'Success', description: 'Contract uploaded successfully' });
       } catch (err) {
-        setUploadError(err instanceof Error ? err.message : 'Failed to upload contract');
+        setUploadError({ message: err instanceof Error ? err.message : 'Failed to upload contract' });
       } finally {
         setUploading(false);
       }
@@ -552,19 +553,33 @@ export default function DataContracts() {
             <DialogTitle>Upload Data Contract</DialogTitle>
           </DialogHeader>
           {uploadError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <AlertDescription className="whitespace-pre-wrap flex-1">{uploadError}</AlertDescription>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 ml-2 hover:bg-destructive/20"
-                onClick={() => setUploadError(null)}
+            <Alert variant="destructive" className="mb-4 relative pr-8">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <span className="whitespace-pre-wrap">{uploadError.message}</span>
+                {uploadError.detail && (
+                  <button
+                    type="button"
+                    className="mt-1 flex items-center gap-1 text-xs underline opacity-80 hover:opacity-100"
+                    onClick={() => setShowErrorDetail(!showErrorDetail)}
+                  >
+                    {showErrorDetail ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    Technical details
+                  </button>
+                )}
+                {showErrorDetail && uploadError.detail && (
+                  <pre className="mt-1 text-xs bg-destructive/10 rounded p-2 overflow-x-auto whitespace-pre-wrap break-all">{uploadError.detail}</pre>
+                )}
+              </AlertDescription>
+              <button
+                type="button"
+                className="absolute top-3 right-3 rounded-sm opacity-70 hover:opacity-100"
+                onClick={() => { setUploadError(null); setShowErrorDetail(false); }}
                 title={t('common:tooltips.dismiss')}
               >
+                <X className="h-4 w-4" />
                 <span className="sr-only">Dismiss</span>
-                ×
-              </Button>
+              </button>
             </Alert>
           )}
           <div
@@ -615,7 +630,7 @@ export default function DataContracts() {
                   setOdcsPaste('')
                   toast({ title: 'Imported', description: 'ODCS JSON imported successfully' })
                 } catch (err) {
-                  setUploadError(err instanceof Error ? err.message : 'Failed to import ODCS JSON')
+                  setUploadError({ message: err instanceof Error ? err.message : 'Failed to import ODCS JSON' })
                 }
               }}
             />

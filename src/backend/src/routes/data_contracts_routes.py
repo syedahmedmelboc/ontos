@@ -101,12 +101,22 @@ async def get_contracts(
 
         logger.info(f"User {current_user.email if current_user else 'unknown'} fetching contracts (project_id: {project_id}, domain_id: {domain_id}, is_admin: {is_admin})")
 
-        return manager.list_contracts_from_db(
+        # #region agent log
+        import time as _t; _dbg_list_t0 = _t.time()
+        # #endregion
+        result = manager.list_contracts_from_db(
             db,
             domain_id=domain_id,
             project_id=project_id,
             is_admin=is_admin
         )
+        # #region agent log
+        import json as _json
+        _dbg_list_elapsed = _t.time() - _dbg_list_t0
+        _dbg_log = _json.dumps({"sessionId":"89fd1d","hypothesisId":"C","location":"data_contracts_routes.py:get_contracts","message":"list contracts timing","data":{"elapsed_s":round(_dbg_list_elapsed,2),"count":len(result)},"timestamp":int(_t.time()*1000)})
+        with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+        # #endregion
+        return result
     except Exception as e:
         error_msg = f"Error retrieving data contracts: {e!s}"
         logger.error(error_msg)
@@ -1045,30 +1055,54 @@ async def upload_contract(
             logger.warning(warning)
         
         # Create contract with all nested entities using manager
+        # #region agent log
+        import time as _t; _dbg_upload_t0 = _t.time()
+        # #endregion
         created = manager.create_from_upload(
             db=db,
             parsed_odcs=parsed,
             current_user=current_user.username if current_user else None
         )
+        # #region agent log
+        _dbg_upload_t1 = _t.time()
+        # #endregion
         
         success = True
         created_contract_id = created.id
 
         # Load with relationships for response
         created_with_relations = data_contract_repo.get_with_all(db, id=created.id)
-        return manager._build_contract_api_model(db, created_with_relations)
+        # #region agent log
+        _dbg_upload_t2 = _t.time()
+        # #endregion
+        result = manager._build_contract_api_model(db, created_with_relations)
+        # #region agent log
+        _dbg_upload_t3 = _t.time()
+        _dbg_sc = len(result.contract_schema) if hasattr(result, 'contract_schema') else 0
+        _dbg_pc = sum(len(s.properties) for s in result.contract_schema) if hasattr(result, 'contract_schema') else 0
+        import json as _json
+        _dbg_log = _json.dumps({"sessionId":"89fd1d","hypothesisId":"B","location":"data_contracts_routes.py:upload_contract","message":"upload timing","data":{"create_from_upload_s":round(_dbg_upload_t1-_dbg_upload_t0,2),"get_with_all_s":round(_dbg_upload_t2-_dbg_upload_t1,2),"build_api_model_s":round(_dbg_upload_t3-_dbg_upload_t2,2),"total_s":round(_dbg_upload_t3-_dbg_upload_t0,2),"schemas":_dbg_sc,"props":_dbg_pc},"timestamp":int(_t.time()*1000)})
+        with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+        # #endregion
+        return result
 
     except ValueError as e:
         logger.error("Validation error uploading contract: %s", e)
         details_for_audit["exception"] = {"type": "ValueError", "message": str(e)}
-        raise HTTPException(status_code=400, detail="Invalid contract data")
+        raise HTTPException(status_code=400, detail={
+            "message": "Invalid contract data",
+            "error": str(e),
+        })
     except HTTPException as http_exc:
         details_for_audit["exception"] = {"type": "HTTPException", "status_code": http_exc.status_code, "detail": http_exc.detail}
         raise
     except Exception as e:
         logger.exception("Upload failed")
         details_for_audit["exception"] = {"type": type(e).__name__, "message": str(e)}
-        raise HTTPException(status_code=500, detail="Upload failed")
+        raise HTTPException(status_code=500, detail={
+            "message": "Upload failed",
+            "error": f"{type(e).__name__}: {e}",
+        })
     finally:
         if created_contract_id:
             details_for_audit["created_resource_id"] = created_contract_id

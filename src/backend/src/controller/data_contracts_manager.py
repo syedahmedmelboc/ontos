@@ -530,6 +530,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         logger.info("Fetching data contracts for search indexing (DB-backed)...")
         items: List[SearchIndexItem] = []
         try:
+            # #region agent log
+            import time as _t; _dbg_si_t0 = _t.time()
+            # #endregion
             session_factory = get_session_factory()
             if not session_factory:
                 logger.warning("Session factory not available; cannot index data contracts.")
@@ -538,11 +541,21 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             with session_factory() as db:
                 # Fetch a generous number; adjust if needed
                 contracts_db = data_contract_repo.get_multi(db=db, limit=10000)
+                # #region agent log
+                _dbg_si_t1 = _t.time()
+                _dbg_log = json.dumps({"sessionId":"89fd1d","hypothesisId":"C","location":"data_contracts_manager.py:get_search_index_items","message":"get_multi done","data":{"count":len(contracts_db),"elapsed_s":round(_dbg_si_t1-_dbg_si_t0,2)},"timestamp":int(_t.time()*1000)})
+                with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+                # #endregion
                 for contract_db in contracts_db:
                     item = self._build_search_index_item(contract_db, db)
                     if item:
                         items.append(item)
 
+            # #region agent log
+            _dbg_si_t2 = _t.time()
+            _dbg_log = json.dumps({"sessionId":"89fd1d","hypothesisId":"C","location":"data_contracts_manager.py:get_search_index_items","message":"search index build done","data":{"items":len(items),"total_s":round(_dbg_si_t2-_dbg_si_t0,2)},"timestamp":int(_t.time()*1000)})
+            with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+            # #endregion
             logger.info(f"Prepared {len(items)} data contracts for search index.")
             return items
         except Exception as e:
@@ -1597,6 +1610,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             schema_data: List of schema object data (can be Pydantic models or dicts)
             current_user: Username for semantic link creation
         """
+        # #region agent log
+        import time as _t; _dbg_t0 = _t.time(); _dbg_total_props = 0; _dbg_total_objs = len(schema_data)
+        # #endregion
         for schema_obj_data in schema_data:
             # Support both Pydantic models and dicts
             if hasattr(schema_obj_data, 'model_dump'):
@@ -1622,6 +1638,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             
             # Add properties
             properties = schema_dict.get('properties', [])
+            # #region agent log
+            _dbg_total_props += len(properties) if properties else 0
+            # #endregion
             if properties:
                 for prop_data in properties:
                     if hasattr(prop_data, 'model_dump'):
@@ -1722,6 +1741,11 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                     authoritative_definitions=schema_auth_defs,
                     created_by=current_user
                 )
+        # #region agent log
+        _dbg_elapsed = _t.time() - _dbg_t0
+        _dbg_log = json.dumps({"sessionId":"89fd1d","hypothesisId":"A","location":"data_contracts_manager.py:_create_schema_objects","message":"schema_objects creation done","data":{"schema_objects":_dbg_total_objs,"total_properties":_dbg_total_props,"elapsed_s":round(_dbg_elapsed,2)},"timestamp":int(_t.time()*1000)})
+        with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+        # #endregion
     
     def _create_quality_checks(self, db, contract_id: str, quality_rules: List):
         """
@@ -1832,8 +1856,12 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 continue
             channel_db = DataContractSupportDb(
                 contract_id=contract_id,
-                type=support_item.get('type', 'email'),
-                channel=support_item.get('channel')
+                channel=support_item.get('channel', ''),
+                url=support_item.get('url', ''),
+                description=support_item.get('description'),
+                tool=support_item.get('tool'),
+                scope=support_item.get('scope'),
+                invitation_url=support_item.get('invitationUrl'),
             )
             db.add(channel_db)
     
@@ -1979,11 +2007,25 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             role_db = DataContractRoleDb(
                 contract_id=contract_id,
                 role=role_data.get('role'),
+                description=role_data.get('description'),
                 access=role_data.get('access'),
-                first_contacted=role_data.get('firstContacted'),
-                response_time=role_data.get('responseTime')
+                first_level_approvers=role_data.get('firstLevelApprovers'),
+                second_level_approvers=role_data.get('secondLevelApprovers'),
             )
             db.add(role_db)
+            db.flush()
+
+            role_custom_props = role_data.get('customProperties', [])
+            if isinstance(role_custom_props, list):
+                for cp in role_custom_props:
+                    if isinstance(cp, dict) and cp.get('property'):
+                        from src.db_models.data_contracts import DataContractRolePropertyDb
+                        prop_db = DataContractRolePropertyDb(
+                            role_id=role_db.id,
+                            property=cp['property'],
+                            value=str(cp['value']) if cp.get('value') is not None else None,
+                        )
+                        db.add(prop_db)
     
     def _create_legacy_quality_rules(self, db, contract_id: str, quality_rules_data: List[dict]):
         """Create top-level quality rules (legacy ODCS format)."""
@@ -5708,10 +5750,14 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         from src.repositories.data_domain_repository import data_domain_repo
         from src.repositories.tags_repository import entity_tag_repo
         
+        # #region agent log
+        import time as _t; _dbg_build_t0 = _t.time()
+        # #endregion
+        
         # Resolve domain name from domain_id if available
-        logger.info(f"[BUILD API] db_contract.domain_id = {db_contract.domain_id}")
-        logger.info(f"[BUILD API] db_contract.project_id = {db_contract.project_id}")
-        logger.info(f"[BUILD API] db_contract.owner_team_id = {db_contract.owner_team_id}")
+        logger.debug(f"[BUILD API] db_contract.domain_id = {db_contract.domain_id}")
+        logger.debug(f"[BUILD API] db_contract.project_id = {db_contract.project_id}")
+        logger.debug(f"[BUILD API] db_contract.owner_team_id = {db_contract.owner_team_id}")
         
         domain_name = None
         if db_contract.domain_id:
@@ -5929,6 +5975,14 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 logger.debug(f"Could not resolve project: {e}")
         
         logger.debug(f"Building API model for contract {db_contract.id}")
+        
+        # #region agent log
+        _dbg_build_elapsed = _t.time() - _dbg_build_t0
+        _dbg_schema_count = len(schema_objects)
+        _dbg_prop_count = sum(len(s.properties) for s in schema_objects)
+        _dbg_log = json.dumps({"sessionId":"89fd1d","hypothesisId":"C","location":"data_contracts_manager.py:_build_contract_api_model","message":"build api model timing","data":{"contract_id":db_contract.id,"elapsed_s":round(_dbg_build_elapsed,2),"schema_objects":_dbg_schema_count,"properties":_dbg_prop_count},"timestamp":int(_t.time()*1000)})
+        with open("/Users/lars.george/Documents/dev/dbapp/ucapp/.cursor/debug-89fd1d.log","a") as _f: _f.write(_dbg_log+"\n")
+        # #endregion
         
         return DataContractRead(
             id=db_contract.id,
