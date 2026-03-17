@@ -1,6 +1,6 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-03-11
+**Analysis Date:** 2026-03-17
 
 ## Test Framework
 
@@ -11,11 +11,12 @@
 - Coverage Tool: pytest-cov 4.0+ with HTML, XML, and term-missing reports
 
 **Frontend (TypeScript/React):**
-- Runner: Vitest
+- Runner: Vitest 3.2+
 - Config: `src/frontend/vitest.config.ts`
 - Assertion Library: Vitest built-in + `@testing-library/jest-dom/vitest`
-- Coverage Tool: c8 (v8 provider) with text, json, html, lcov reporters
-- E2E Testing: Playwright with MCP integration (`src/frontend/playwright.config.ts`)
+- Testing Library: `@testing-library/react` 16.3+, `@testing-library/user-event` 14.6+
+- Coverage Tool: v8 provider with text, json, html, lcov reporters
+- E2E Testing: Playwright 1.55+
 
 **Run Commands:**
 
@@ -30,15 +31,15 @@ hatch -e dev run test-cov-xml      # Run with XML coverage report
 
 Frontend:
 ```bash
-# Vitest unit/component tests
-vitest                             # Run in watch mode
-vitest run                         # Run once
-vitest run --coverage              # Generate coverage report
-
-# Playwright E2E tests
-playwright test                    # Run all specs
-playwright test --ui               # Interactive mode
-playwright test --headed           # Show browser
+cd src/frontend
+yarn test                          # Run in watch mode (vitest)
+yarn test:run                      # Run once
+yarn test:coverage                 # Generate coverage report
+yarn test:ui                       # Vitest UI mode
+yarn test:e2e                      # Playwright E2E tests
+yarn test:e2e:ui                   # Playwright interactive mode
+yarn test:e2e:debug                # Playwright debug mode
+yarn test:all                      # Run both unit and E2E tests
 ```
 
 ## Test File Organization
@@ -46,85 +47,101 @@ playwright test --headed           # Show browser
 **Location:**
 
 Backend:
-- Path: `src/backend/src/tests/` or `src/backend/tests/`
-- Structure:
-  - `src/tests/unit/` - Unit tests (mocked dependencies)
-  - `src/tests/integration/` - Integration tests (real dependencies where practical)
-- Naming: `test_*.py` (e.g., `test_data_products_manager.py`)
+- Path: `src/backend/tests/`
+- Files: `test_*.py`
+- Example files:
+  - `src/backend/tests/test_compliance_dsl.py`
+  - `src/backend/tests/test_compliance_actions.py`
+  - `src/backend/tests/test_catalog_commander_manager.py`
 
-Frontend:
-- Path: `src/frontend/src/` (co-located with source)
-- Structure:
-  - `**/*.test.ts` or `**/*.test.tsx` - Unit/component tests (vitest)
-  - `src/tests/*.spec.ts` - E2E tests (Playwright, excluded from vitest)
-  - `tests/*.spec.ts` - Additional E2E tests
-- Naming:
-  - Vitest: `*.test.ts`, `*.test.tsx`
-  - Playwright: `*.spec.ts` (E2E scenarios)
+Frontend (Vitest):
+- Path: Co-located with source files
+- Pattern: `**/*.test.ts`, `**/*.test.tsx`
+- Example files:
+  - `src/frontend/src/hooks/use-api.test.ts`
+  - `src/frontend/src/stores/permissions-store.test.ts`
+  - `src/frontend/src/components/data-products/data-product-form-dialog.test.tsx`
 
-**Naming:**
-- Python: `test_{feature}.py` (e.g., `test_data_products_manager.py`, `test_search_manager.py`)
-- TypeScript: `{component}.test.ts` or `{component}.test.tsx` (e.g., `permissions-store.test.ts`, `tag-chip.test.tsx`)
+Frontend (Playwright E2E):
+- Path: `src/frontend/src/tests/` and `src/frontend/tests/`
+- Pattern: `*.spec.ts`
+- Example files:
+  - `src/frontend/src/tests/contract-outputport-mapping.spec.ts`
+  - `src/frontend/src/tests/domain-edit.spec.ts`
+  - `src/frontend/tests/team-assignment.spec.ts`
 
 ## Test Structure
 
 **Backend Test Suite Organization:**
 
 ```python
-"""
-Unit tests for DataProductsManager - ODPS v1.0.0 Data Products
-
-Tests business logic for data product operations including:
-- CRUD operations (create, read, update, delete)
-- Product lifecycle transitions (draft → proposed → active → deprecated)
-- Contract integration
-- Tag management
-- Search functionality
-"""
+"""Unit tests for Compliance DSL Parser and Evaluator."""
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock
 
-class TestDataProductsManager:
-    """Test suite for DataProductsManager"""
+from src.common.compliance_dsl import (
+    Lexer,
+    Parser,
+    Evaluator,
+    TokenType,
+    evaluate_rule_on_object,
+)
 
-    @pytest.fixture
-    def mock_ws_client(self):
-        """Create a mocked Databricks WorkspaceClient."""
-        return MagicMock()
 
-    @pytest.fixture
-    def manager(self, db_session: Session, mock_ws_client, mock_notifications_manager):
-        """Create DataProductsManager instance for testing."""
-        return DataProductsManager(
-            db=db_session,
-            ws_client=mock_ws_client,
-            notifications_manager=mock_notifications_manager
-        )
+class TestLexer:
+    """Test DSL lexer."""
 
-    @pytest.fixture
-    def sample_product_data(self):
-        """Sample data product data for testing."""
-        return {
-            "id": str(uuid.uuid4()),
-            "name": "Test Data Product",
-            # ... required fields
-        }
+    def test_tokenize_simple_assertion(self):
+        """Test tokenizing a simple assertion."""
+        lexer = Lexer("obj.name = 'test'")
+        tokens = lexer.tokenize()
 
-    # =====================================================================
-    # Create Product Tests
-    # =====================================================================
+        assert tokens[0].type == TokenType.IDENTIFIER
+        assert tokens[0].value == 'obj'
 
-    def test_create_product_success(self, manager, db_session, sample_product_data):
-        """Test successful product creation with all required fields."""
-        # Act
-        result = manager.create_product(sample_product_data, db=db_session)
+    def test_tokenize_regex_match(self):
+        """Test tokenizing MATCHES operator."""
+        lexer = Lexer("obj.name MATCHES '^[a-z]+$'")
+        tokens = lexer.tokenize()
 
-        # Assert
-        assert result is not None
-        assert result.id == sample_product_data["id"]
-        # Verify DB persistence
-        db_product = db_session.query(DataProductDb).filter_by(id=result.id).first()
-        assert db_product is not None
+        assert any(t.type == TokenType.MATCHES for t in tokens)
+
+
+class TestEvaluator:
+    """Test DSL evaluator."""
+
+    def test_evaluate_property_access(self):
+        """Test evaluating property access."""
+        obj = {'name': 'test_table'}
+        evaluator = Evaluator(obj)
+        ast = PropertyAccess('obj', 'name')
+
+        result = evaluator.evaluate(ast)
+        assert result == 'test_table'
+
+
+class TestRuleEvaluation:
+    """Test complete rule evaluation."""
+
+    def test_simple_naming_convention(self):
+        """Test naming convention rule."""
+        rule = "ASSERT obj.name MATCHES '^[a-z][a-z0-9_]*$'"
+
+        # Valid name
+        obj1 = {'name': 'valid_table_name'}
+        passed, msg = evaluate_rule_on_object(rule, obj1)
+        assert passed is True
+        assert msg is None
+
+        # Invalid name
+        obj2 = {'name': 'InvalidName'}
+        passed, msg = evaluate_rule_on_object(rule, obj2)
+        assert passed is False
+        assert msg is not None
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])
 ```
 
 **Frontend Test Suite Organization:**
@@ -132,7 +149,11 @@ class TestDataProductsManager:
 ```typescript
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import usePermissionsStore from './permissions-store';
+import usePermissionsStore, { usePermissions } from './permissions-store';
+import { FeatureAccessLevel } from '@/types/settings';
+
+// Mock fetch globally
+global.fetch = vi.fn();
 
 describe('Permissions Store', () => {
   beforeEach(() => {
@@ -142,6 +163,7 @@ describe('Permissions Store', () => {
         permissions: {},
         isLoading: false,
         error: null,
+        availableRoles: [],
       });
     });
     vi.clearAllMocks();
@@ -162,7 +184,10 @@ describe('Permissions Store', () => {
   describe('fetchPermissions', () => {
     it('fetches and sets permissions successfully', async () => {
       // Arrange
-      const mockPermissions = { 'data-products': 'READ_WRITE' };
+      const mockPermissions = {
+        'data-products': FeatureAccessLevel.READ_WRITE,
+        'data-contracts': FeatureAccessLevel.READ_ONLY,
+      };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => mockPermissions,
@@ -180,6 +205,23 @@ describe('Permissions Store', () => {
       expect(result.current.error).toBeNull();
     });
   });
+
+  describe('hasPermission', () => {
+    it('returns true when user has sufficient permission', () => {
+      const { result } = renderHook(() => usePermissionsStore());
+
+      act(() => {
+        usePermissionsStore.setState({
+          permissions: {
+            'data-products': FeatureAccessLevel.READ_WRITE,
+          },
+        });
+      });
+
+      expect(result.current.hasPermission('data-products', FeatureAccessLevel.READ_ONLY)).toBe(true);
+      expect(result.current.hasPermission('data-products', FeatureAccessLevel.READ_WRITE)).toBe(true);
+    });
+  });
 });
 ```
 
@@ -187,8 +229,8 @@ describe('Permissions Store', () => {
 - Arrange-Act-Assert (AAA) pattern for test structure
 - Descriptive test names: `test_feature_scenario_expected_result`
 - Group related tests with nested describe blocks or class test organization
-- One assertion per test when practical (allows pinpointing failures)
-- Comments above test sections (e.g., `# =====================================================================`)
+- Use `describe`/`it` (not `test`) for frontend tests
+- Use `class Test*` with `def test_*` for backend tests
 
 ## Mocking
 
@@ -200,6 +242,8 @@ describe('Permissions Store', () => {
 
 Python:
 ```python
+from unittest.mock import MagicMock, patch
+
 @pytest.fixture
 def mock_ws_client(self):
     """Create a mocked Databricks WorkspaceClient."""
@@ -207,12 +251,6 @@ def mock_ws_client(self):
     mock.clusters.list.return_value = []
     mock.catalogs.list.return_value = []
     return mock
-
-@patch('src.controller.data_products_manager.uuid.uuid4')
-def test_with_patch(self, mock_uuid):
-    """Test with patched global function."""
-    mock_uuid.return_value = 'mocked-id'
-    # ... test code
 ```
 
 TypeScript:
@@ -227,22 +265,22 @@ global.fetch = vi.fn();
 });
 
 // Clean up
-vi.clearAllMocks();
-vi.restoreAllMocks();
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.restoreAllMocks();
+});
 ```
 
 **What to Mock:**
-- External SDK clients (Databricks WorkspaceClient, etc.)
-- HTTP requests (via `fetch` or axios)
-- Database access (provide real in-memory DB instead where practical)
+- External SDK clients (Databricks WorkspaceClient)
+- HTTP requests (via `fetch`)
 - Dependent managers (NotificationsManager, TagsManager)
 - Global browser APIs (localStorage, fetch, ResizeObserver, IntersectionObserver)
 
 **What NOT to Mock:**
-- Repository/CRUD logic - test with real in-memory SQLite when practical
-- Pydantic/Zod validation - test error cases
+- Repository/CRUD logic - test with real in-memory SQLite
 - Zustand store mutations - test state changes directly
-- Custom hooks internal logic - test via renderHook or component mount
+- Custom hooks internal logic - test via renderHook
 
 ## Fixtures and Factories
 
@@ -255,12 +293,8 @@ def sample_product_data(self):
     return {
         "id": str(uuid.uuid4()),
         "name": "Test Data Product",
-        "description": {"purpose": "Test product for unit tests"},
         "version": "1.0.0",
         "status": "draft",
-        "productType": "sourceAligned",
-        "owner": "test@example.com",
-        "tags": ["test", "sample"],
     }
 ```
 
@@ -272,48 +306,96 @@ const mockPermissions = {
   'data-contracts': FeatureAccessLevel.READ_ONLY,
 };
 
-const mockUser = new UserInfo(
-  username="testuser",
-  email="test@example.com",
-  display_name="Test User",
-  active=True,
-  groups=["users", "data_consumers"],
-);
+const mockRoles = [
+  {
+    id: 'role-1',
+    name: 'Admin',
+    feature_permissions: {
+      'data-products': FeatureAccessLevel.ADMIN,
+    },
+  },
+];
 ```
 
 **Location:**
-- Python: Inline in test files as fixtures, or in helper modules like `src/tests/helpers.py`
-- TypeScript: Inline in test files, or in mock data files (e.g., `src/test/mockData/`)
+- Backend: Inline in test files as fixtures
+- Frontend: Inline in test files
 
-**Database Fixture (Python):**
+## Test Setup (Frontend)
 
-File: `src/backend/src/tests/conftest.py`
+**File:** `src/frontend/src/test/setup.ts`
 
-```python
-@pytest.fixture(scope="function", autouse=True)
-def db_session(setup_test_database):
-    """
-    Provides a database session for each test function, with transaction rollback.
-    Uses in-memory SQLite with StaticPool for persistence.
-    """
-    connection = test_engine.connect()
-    transaction = connection.begin()
-    db = TestingSessionLocal(bind=connection)
+```typescript
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach, beforeEach, vi } from 'vitest';
 
-    def override_get_db():
-        try:
-            yield db
-        finally:
-            pass
+// Cleanup after each test
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
-    app.dependency_overrides[get_db] = override_get_db
-    yield db
+// Mock IntersectionObserver
+class MockIntersectionObserver implements IntersectionObserver {
+  readonly root: Element | Document | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
 
-    # Cleanup
-    db.close()
-    transaction.rollback()
-    connection.close()
-    app.dependency_overrides.pop(get_db, None)
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
+
+  observe(): void {}
+  disconnect(): void {}
+  unobserve(): void {}
+  takeRecords(): IntersectionObserverEntry[] { return []; }
+}
+global.IntersectionObserver = MockIntersectionObserver;
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  observe() { return null; }
+  disconnect() { return null; }
+  unobserve() { return null; }
+};
+
+// Mock scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();
+
+// Mock getBoundingClientRect
+Element.prototype.getBoundingClientRect = vi.fn(() => ({
+  x: 0, y: 0, width: 0, height: 0, top: 0, right: 0, bottom: 0, left: 0,
+  toJSON: vi.fn(),
+}));
+
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => { store[key] = value.toString(); },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
+    get length() { return Object.keys(store).length; },
+    key: (index: number) => Object.keys(store)[index] || null,
+  };
+})();
+global.localStorage = localStorageMock as any;
 ```
 
 ## Coverage
@@ -325,12 +407,13 @@ def db_session(setup_test_database):
 Backend:
 ```bash
 hatch -e dev run test-cov          # Generates htmlcov/index.html
-open backend/htmlcov/index.html
+open src/backend/htmlcov/index.html
 ```
 
 Frontend:
 ```bash
-vitest run --coverage              # Generates coverage/index.html
+cd src/frontend
+yarn test:coverage                  # Generates coverage/
 open coverage/index.html
 ```
 
@@ -344,6 +427,8 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
     "*/__init__.py",
+    "*/migrations/*",
+    "*/alembic/*",
 ]
 
 [tool.coverage.report]
@@ -352,7 +437,9 @@ show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
+    "raise AssertionError",
     "raise NotImplementedError",
+    "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
     "@abstractmethod",
 ]
@@ -367,9 +454,18 @@ coverage: {
     'node_modules/',
     'src/test/',
     '**/*.d.ts',
+    '**/*.config.*',
+    '**/mockData',
     'src/components/ui/**',  // Exclude Shadcn base components
+    '**/*.test.{ts,tsx}',
+    '**/*.spec.{ts,tsx}',
   ],
   all: true,
+  // Coverage thresholds disabled for now
+  // lines: 80,
+  // functions: 80,
+  // branches: 80,
+  // statements: 80,
 }
 ```
 
@@ -378,44 +474,58 @@ coverage: {
 **Unit Tests:**
 - Scope: Single function/method in isolation
 - Approach: Mock all external dependencies
-- Backend example: `test_create_product_success` tests manager method with mocked repo and SDK
-- Frontend example: `test_has_correct_initial_state` tests store initialization
-- Location: `src/tests/unit/` (backend), `**/*.test.ts` (frontend)
+- Backend: Manager methods with mocked repository and SDK
+- Frontend: Store actions, hook behavior, utility functions
 
 **Integration Tests:**
 - Scope: Multiple components working together
-- Approach: Real database (in-memory SQLite), mocked external APIs (SDK, HTTP)
-- Backend example: Manager + Repository + Database
-- Location: `src/tests/integration/` (backend)
+- Approach: Real database (in-memory SQLite), mocked external APIs
+- Backend: Manager + Repository + Database
 
 **E2E Tests (Frontend):**
 - Scope: Full user workflows (navigate, interact, assert)
 - Approach: Real browser via Playwright, real API endpoints
-- Tools: Playwright MCP integration (`mcp__playwright__browser_*`)
-- Location: `src/frontend/src/tests/*.spec.ts` or `tests/*.spec.ts`
-- Example: `contract-outputport-mapping.spec.ts`
+- Location: `src/frontend/src/tests/*.spec.ts` and `src/frontend/tests/*.spec.ts`
+
+**Playwright Configuration (`src/frontend/playwright.config.ts`):**
+```typescript
+export default defineConfig({
+  timeout: 90_000,
+  expect: { timeout: 10_000 },
+  testDir: './src/tests',
+  retries: 0,
+  reporter: 'list',
+  use: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+  ],
+  webServer: {
+    command: 'yarn dev:frontend --port 3000',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+  },
+});
+```
 
 ## Common Patterns
 
 **Async Testing (Python):**
-
 ```python
 @pytest.mark.asyncio
 async def test_async_operation(self, manager):
     """Test async operation."""
-    # Act
     result = await manager.async_method()
-
-    # Assert
     assert result is not None
 ```
 
 **Async Testing (TypeScript):**
-
 ```typescript
 it('fetches and sets permissions successfully', async () => {
-  // Arrange
-  const mockData = { /* ... */ };
+  const mockData = { 'data-products': FeatureAccessLevel.READ_WRITE };
   (global.fetch as any).mockResolvedValueOnce({
     ok: true,
     json: async () => mockData,
@@ -423,34 +533,27 @@ it('fetches and sets permissions successfully', async () => {
 
   const { result } = renderHook(() => usePermissionsStore());
 
-  // Act
   await act(async () => {
     await result.current.fetchPermissions();
   });
 
-  // Assert
   expect(result.current.permissions).toEqual(mockData);
 });
 ```
 
 **Error Testing (Python):**
-
 ```python
 def test_create_product_validation_error(self, manager, db_session):
     """Test error handling for invalid product data."""
-    # Arrange
     invalid_data = {"name": "Test"}  # Missing required fields
 
-    # Act & Assert
     with pytest.raises(ValueError, match="Invalid ODPS product data"):
         manager.create_product(invalid_data, db=db_session)
 ```
 
 **Error Testing (TypeScript):**
-
 ```typescript
 it('handles fetch errors gracefully', async () => {
-  // Arrange
   (global.fetch as any).mockResolvedValueOnce({
     ok: false,
     status: 500,
@@ -459,57 +562,96 @@ it('handles fetch errors gracefully', async () => {
 
   const { result } = renderHook(() => usePermissionsStore());
 
-  // Act & Assert
   try {
     await act(async () => {
       await result.current.fetchPermissions();
     });
-  } catch (error) {
-    expect(result.current.error).toBeTruthy();
+  } catch (e) {
+    // Expected to throw
   }
+
+  const storeState = usePermissionsStore.getState();
+  expect(storeState.error).toBeTruthy();
 });
 ```
 
-**Component Testing (TypeScript/React):**
-
+**Waiting for State (TypeScript):**
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react';
+// Use waitFor for async state updates
+await waitFor(() => {
+  expect(result.current.appliedRoleId).toBe('role-1');
+});
 
-it('renders button and handles click', () => {
-  // Arrange
-  const handleClick = vi.fn();
-
-  // Act
-  render(<Button onClick={handleClick}>Click me</Button>);
-  const button = screen.getByRole('button', { name: /click me/i });
-  fireEvent.click(button);
-
-  // Assert
-  expect(handleClick).toHaveBeenCalledOnce();
+// Use waitFor with expect for assertions
+await waitFor(() => {
+  expect(global.fetch).toHaveBeenCalledWith(
+    '/api/user/role-override',
+    expect.objectContaining({ method: 'POST' })
+  );
 });
 ```
 
-**Browser Environment Mocking (Frontend):**
-
-File: `src/frontend/src/test/setup.ts`
-
+**E2E Testing (Playwright):**
 ```typescript
-// Mock IntersectionObserver
-class MockIntersectionObserver implements IntersectionObserver {
-  // ... implementation
-}
-global.IntersectionObserver = MockIntersectionObserver;
+import { test, expect } from '@playwright/test';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: (key) => store[key] || null,
-  setItem: (key, value) => { store[key] = value; },
-  removeItem: (key) => { delete store[key]; },
-  clear: () => { store = {}; },
-};
-global.localStorage = localStorageMock as any;
+test.describe('Contract-OutputPort Mapping', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('should link existing contract to output port from product side', async ({ page }) => {
+    await page.click('text=Data Products');
+    await page.waitForURL('**/data-products');
+
+    const productCard = page.locator('.border').first();
+    await productCard.click();
+
+    await page.waitForSelector('text=Output Ports');
+
+    const linkButton = page.locator('button[title="Link contract"]').first();
+    if (await linkButton.isVisible()) {
+      await linkButton.click();
+    }
+
+    await page.waitForSelector('text=Link Contract to Output Port');
+
+    await page.click('[id="contract"]');
+    await page.waitForSelector('role=option');
+    await page.click('role=option >> nth=0');
+
+    await page.click('button:has-text("Link Contract")');
+
+    await page.waitForSelector('text=Contract Linked', { timeout: 10000 });
+    await expect(page.locator('text=Contract:')).toBeVisible();
+  });
+});
+```
+
+## Known Limitations
+
+**Component Testing:**
+- Complex Radix UI components (Select, Combobox) may hang in jsdom
+- These are better tested with Playwright E2E tests
+- Example: `DataProductFormDialog` is skipped for this reason
+
+**Pattern for Skipped Tests:**
+```typescript
+/**
+ * NOTE: This test file is skipped because the component uses complex Radix UI
+ * components (Select, Combobox) that don't work reliably in jsdom and cause
+ * infinite render loops. These interactions are better tested with Playwright E2E tests.
+ */
+import { describe, it, expect } from 'vitest';
+
+describe.skip('DataProductFormDialog', () => {
+  it('renders correctly', () => {
+    expect(true).toBe(true);
+  });
+});
 ```
 
 ---
 
-*Testing analysis: 2026-03-11*
+*Testing analysis: 2026-03-17*

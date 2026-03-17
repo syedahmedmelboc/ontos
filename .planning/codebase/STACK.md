@@ -1,17 +1,17 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-11
+**Analysis Date:** 2026-03-17
 
 ## Languages
 
 **Primary:**
-- Python 3.11 - Backend API and business logic (`src/backend/src/`)
+- Python 3.11-3.12 - Backend API and business logic (`src/backend/src/`)
 - TypeScript 5.3 - Frontend application and UI components (`src/frontend/src/`)
 
 **Supporting:**
 - YAML 6.0+ - Configuration files, workflows, app manifests
 - HTML5 / CSS3 - Templates and styling
-- RDF/Turtle - Semantic ontology definitions (`src/backend/src/data/taxonomies/`)
+- RDF/Turtle - Semantic ontology definitions (`src/backend/src/data/`)
 
 ## Runtime
 
@@ -27,7 +27,7 @@
 ## Frameworks
 
 **Core:**
-- FastAPI 0.110.2+ - REST API framework, async Python web server
+- FastAPI 0.110.2-0.118.x - REST API framework, async Python web server
 - React 18.2 - Frontend UI framework
 - Uvicorn 0.32.0+ - ASGI server for FastAPI
 
@@ -88,6 +88,7 @@
 **External Services & APIs:**
 
 - `requests>=2.31.0` - HTTP client library
+- `httpx>=0.25.0` - Async HTTP client
 - `openai>=2.4.0` - OpenAI API client (for LLM features - optional, see `LLM_ENABLED`)
 - `google-cloud-bigquery>=3.25.0` - Google BigQuery connector
 - `GitPython>=3.1.44` - Git operations for configuration sync
@@ -99,7 +100,7 @@
 **Server & Async:**
 
 - `python-multipart>=0.0.19` - File upload handling for FastAPI
-- `sse-starlette>=1.6.0,<2.0.0` - Server-Sent Events for real-time streams
+- `sse-starlette>=1.6.0,<2.0.0` - Server-Sent Events for MCP protocol
 - `flask-cors>=5.0.0` - CORS middleware
 
 **Configuration & Logging:**
@@ -159,7 +160,7 @@
 **Environment Variables:**
 - `.env` file (required for local development) - connection strings, credentials, feature flags
 - Example template: `.env.example` in `src/backend/` with all documented options
-- Key vars: `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, `POSTGRES_HOST/PORT/USER/PASSWORD/DB`, `LLM_ENABLED`, `LLM_ENDPOINT`
+- Key vars: `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, `PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE`, `LLM_ENABLED`, `LLM_ENDPOINT`
 - See `src/backend/src/common/config.py` for Settings model parsing
 
 **Build Configuration:**
@@ -198,8 +199,8 @@
 **Production:**
 - Deployment target: Databricks Apps platform (serverless container runtime)
 - Requires: Databricks workspace, Unity Catalog, SQL warehouse
-- Frontend: Static files served from backend (Vite build output → `src/backend/static/`)
-- Database: PostgreSQL or Databricks SQL (via JDBC/connection string)
+- Frontend: Static files served from backend (Vite build output to `src/static/`)
+- Database: PostgreSQL or Databricks Lakebase (auto-injected via `valueFrom: "database"`)
 - Runtime: Python 3.11 in Databricks App container
 - Optional: Google Cloud access (for BigQuery integration), GitHub credentials (for Git sync)
 
@@ -219,7 +220,7 @@ npm run build  # Builds frontend static + copies to backend
 
 **Production Build:**
 ```bash
-# Frontend production build (outputs to src/frontend/static/)
+# Frontend production build (outputs to src/static/)
 yarn build
 
 # Python package build via Hatch
@@ -231,4 +232,4 @@ databricks bundle deploy --var="catalog=app_data" --var="schema=app_ontos"
 
 ---
 
-*Stack analysis: 2026-03-11*
+*Stack analysis: 2026-03-17*

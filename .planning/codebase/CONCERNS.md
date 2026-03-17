@@ -1,122 +1,148 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-11
+**Analysis Date:** 2026-03-17
 
 ## Tech Debt
 
-**Large Manager Classes:**
-- Issue: Several manager classes exceed 3000+ lines, particularly `DataContractsManager` (6063 lines), making them difficult to maintain and test.
-- Files: `src/backend/src/controller/data_contracts_manager.py` (6063 lines), `src/backend/src/controller/semantic_models_manager.py` (3802 lines), `src/backend/src/controller/data_products_manager.py` (3339 lines)
+**Large Manager Classes (God Objects):**
+- Issue: Several manager classes exceed 3000+ lines, particularly `DataContractsManager` (6171 lines), making them difficult to maintain, test, and reason about.
+- Files: `src/backend/src/controller/data_contracts_manager.py` (6171 lines), `src/backend/src/controller/semantic_models_manager.py` (3802 lines), `src/backend/src/controller/data_products_manager.py` (3342 lines)
 - Impact: Hard to navigate, increases cognitive load, higher bug risk, difficult unit testing, slower development velocity
-- Fix approach: Break into smaller focused classes using composition or domain-driven design; consider splitting by feature/concern
+- Fix approach: Break into smaller focused classes using composition or domain-driven design; extract validation, delivery, and search into separate services
 
 **Large View Components (Frontend):**
-- Issue: Multiple React components exceed 1300+ lines, particularly `data-contract-details.tsx` (3140 lines), `data-contract-wizard-dialog.tsx` (2071 lines), and `data-product-details.tsx` (1820 lines)
+- Issue: Multiple React components exceed 1300+ lines, particularly `data-contract-details.tsx` (3180 lines), `data-contract-wizard-dialog.tsx` (2071 lines), and `data-product-details.tsx` (1956 lines)
 - Files: `src/frontend/src/views/data-contract-details.tsx`, `src/frontend/src/components/data-contracts/data-contract-wizard-dialog.tsx`, `src/frontend/src/views/data-product-details.tsx`
-- Impact: Difficult to refactor, increased re-render performance issues, hard to test complex logic, maintainability nightmare
+- Impact: Difficult to refactor, increased re-render performance issues, hard to test complex logic, maintainability burden
 - Fix approach: Extract sub-components into separate files; move complex business logic to custom hooks; use container/presentation pattern
 
-**Loose Typing in Frontend:**
-- Issue: Multiple components use `any` type assertion for payloads instead of proper TypeScript interfaces
-- Files: `src/frontend/src/components/costs/entity-costs-panel.tsx`, `src/frontend/src/components/access/handle-access-grant-dialog.tsx`, `src/frontend/src/components/data-contracts/self-service-dialog.tsx`, `src/frontend/src/components/data-contracts/dqx-suggestions-dialog.tsx`, `src/frontend/src/components/data-products/custom-property-form-dialog.tsx`
+**Loose Typing in Frontend (any type abuse):**
+- Issue: Multiple components use `any` type for error handling and payloads instead of proper TypeScript interfaces
+- Files: `src/frontend/src/views/collections.tsx` (lines 85, 112, 144, 172), `src/frontend/src/stores/notifications-store.ts`, `src/frontend/src/stores/user-store.ts`, `src/frontend/src/stores/permissions-store.ts`
 - Impact: Type safety lost, potential runtime errors, harder to refactor, IDE autocomplete disabled
-- Fix approach: Create specific TypeScript interfaces for each payload; remove all `as any` casts; enforce strict type checking in tsconfig
+- Fix approach: Create specific TypeScript interfaces for each payload; enforce strict type checking in tsconfig
 
-**Debug Logging Left in Production Code:**
-- Issue: Multiple `[DEBUG MANAGER]` log statements left in `DataContractsManager` during active development
-- Files: `src/backend/src/controller/data_contracts_manager.py` (lines containing `[DEBUG MANAGER]` prefix)
-- Impact: Log pollution, performance overhead, exposes internal structure details
-- Fix approach: Remove or convert to conditional DEBUG-level logs; use proper logging framework with levels
+**TypeScript Ignore Directives:**
+- Issue: Multiple `@ts-ignore` and `@ts-expect-error` directives suppress type errors instead of fixing underlying type issues
+- Files: `src/frontend/src/components/data-contracts/schema-property-editor.tsx` (4 consecutive @ts-ignore), `src/frontend/src/components/settings/ontology-library-dialog.tsx`, `src/frontend/src/components/semantic-models/knowledge-graph.tsx`, `src/frontend/src/components/common/business-lineage-graph.tsx`
+- Impact: Hides legitimate type errors, can mask bugs, reduces effectiveness of TypeScript
+- Fix approach: Add proper type definitions for third-party libraries; create type declaration files for untyped packages
 
-**Print Statements in Workflows:**
-- Issue: Multiple `print()` statements used instead of proper logging in production workflows
-- Files: `src/backend/src/workflows/uc_bulk_import/uc_bulk_import.py`, `src/backend/src/workflows/dqx_profile_datasets/dqx_profile_datasets.py`
-- Impact: Output not captured by monitoring/observability systems, harder to debug in production
-- Fix approach: Replace all `print()` with logger.info/debug calls
+**Python Type Ignore Comments:**
+- Issue: Multiple `# type: ignore` comments suppress mypy errors without addressing root cause
+- Files: `src/backend/src/connectors/bigquery.py`, `src/backend/src/common/repository.py`, `src/backend/src/controller/semantic_links_manager.py`, `src/backend/src/controller/data_contracts_manager.py`, `src/backend/src/controller/semantic_models_manager.py`
+- Impact: Hides legitimate type errors, reduces effectiveness of static analysis
+- Fix approach: Fix underlying type mismatches; use proper generic types; add type stubs where needed
 
-**Datasets Module Deprecation Not Fully Migrated:**
-- Issue: `DatasetsManager` marked as deprecated in CLAUDE.md but routes still exist at `/api/datasets`, creating confusion about which API to use
-- Files: `src/backend/src/routes/datasets_routes.py`, `src/backend/src/controller/datasets_manager.py` (1686 lines)
+**Datasets Module Deprecation Not Completed:**
+- Issue: `DatasetsManager` and routes marked as deprecated but still exist at `/api/datasets`, creating confusion about which API to use
+- Files: `src/backend/src/routes/datasets_routes.py` (DEPRECATED header comment), `src/backend/src/controller/datasets_manager.py` (1699 lines), `src/backend/src/db_models/datasets.py`
 - Impact: API consumers unsure which endpoint to use, code duplication with `/api/assets` routes, maintenance burden
-- Fix approach: Create migration guide; deprecate routes with proper HTTP warnings; set timeline for removal; redirect clients to assets API
+- Fix approach: Add HTTP Deprecation headers; create migration guide; set removal timeline; redirect clients to assets API
 
-**Hardcoded Fallback Values:**
-- Issue: Multiple hardcoded fallback values for missing or undetermined data (e.g., defaulting to TABLE type when asset type determination fails)
-- Files: `src/backend/src/controller/data_asset_reviews_manager.py` (line 74: returns AssetType.TABLE as fallback)
-- Impact: Silent failures, incorrect data propagation, harder to debug issues
-- Fix approach: Raise explicit exceptions with clear error messages instead of silently defaulting
+**Print Statements in Production Code:**
+- Issue: Multiple `print()` statements used instead of proper logging in workflow files
+- Files: `src/backend/src/workflows/dqx_profile_datasets/dqx_profile_datasets.py` (50+ print statements), `src/backend/src/workflows/data_quality_checks/data_quality_checks.py`
+- Impact: Output not captured by monitoring/observability systems, harder to debug in production
+- Fix approach: Replace all `print()` with `logger.info/debug` calls
+
+**Backup Files in Repository:**
+- Issue: Test backup file committed to repository
+- Files: `src/backend/src/tests/unit/test_data_domains_manager.py.bak`
+- Impact: Repository bloat, confusion about which file is active
+- Fix approach: Remove backup files; add `*.bak` to `.gitignore`
 
 ## Known Bugs
 
-**Asset Type Determination Fallback:**
-- Symptoms: When asset FQN is malformed or non-standard, defaults to TABLE type without explicit error
-- Files: `src/backend/src/controller/data_asset_reviews_manager.py` lines 65-79
-- Trigger: Call `_determine_asset_type()` with invalid FQN format (not 3 parts separated by dots) or when WorkspaceClient unavailable
-- Workaround: Ensure FQN is properly formatted as `catalog.schema.object` before passing to function
-
-**Settings Manager Performance Issue:**
-- Symptoms: Call to retrieve settings blocks entire request, particularly slow call mentioned in code comment
-- Files: `src/backend/src/controller/settings_manager.py` (comment on line marked "TODO: This call is too slow")
-- Trigger: Calling `get_settings()` endpoint during high load
-- Workaround: Consider caching strategy; implement async loading; reduce frequency of setting lookups
-- Impact: High request latency, potential timeout issues under load
+**Settings Manager Performance Bottleneck:**
+- Symptoms: Cluster listing call was too slow and blocked entire `get_settings()` call - now returns empty list as workaround
+- Files: `src/backend/src/controller/settings_manager.py` lines 856-871 (commented out implementation with TODO)
+- Trigger: Calling `get_job_clusters()` always returns empty list; original implementation commented out
+- Workaround: Currently returns empty list; clients should not rely on cluster listing
+- Impact: Feature effectively broken; misleading empty results
 
 **Audit Logging Not Implemented:**
-- Symptoms: Tests have commented-out audit logging assertions
-- Files: `src/backend/src/tests/integration/test_teams_routes.py` (multiple TODO comments about audit logging)
+- Symptoms: Integration tests have commented-out audit logging assertions
+- Files: `src/backend/src/tests/integration/test_teams_routes.py` (lines 47, 141, 164 with "TODO: After audit logging is implemented")
 - Trigger: Operations on sensitive entities (teams, roles) that should be logged
 - Impact: No audit trail for compliance-critical operations, security/governance gap
 
+**Empty Return Stubs:**
+- Issue: Multiple functions return empty `[]`, `{}`, or `null` as fallback without proper error handling
+- Files: `src/backend/src/common/search.py` (lines 142, 149), `src/backend/src/routes/user_routes.py` (lines 98, 134), `src/backend/src/routes/workflows_routes.py` (line 257), `src/backend/src/routes/mcp_routes.py` (line 180)
+- Impact: Silent failures, callers may not realize operation failed
+- Fix approach: Raise explicit exceptions or return Result types with error information
+
+## Security Considerations
+
+**Broad Exception Handling:**
+- Risk: Many `except Exception` blocks catch all exceptions, potentially hiding security-relevant errors
+- Files: `src/backend/src/workflows/dqx_profile_datasets/dqx_profile_datasets.py`, `src/backend/src/workflows/data_quality_checks/data_quality_checks.py`, `src/backend/src/routes/tags_routes.py` (multiple endpoints)
+- Current mitigation: Some logging exists but inconsistent
+- Recommendations: Catch specific exceptions; log full stack traces for unexpected errors; avoid silent catches
+
+**SQL String Formatting:**
+- Risk: Dynamic SQL constructed with f-strings for table identifiers
+- Files: `src/backend/src/controller/catalog_commander_manager.py` (lines 458, 491), `src/backend/src/connectors/databricks.py` (line 958), `src/backend/src/connectors/bigquery.py` (line 897), `src/backend/src/controller/data_asset_reviews_manager.py` (line 609)
+- Current mitigation: Identifiers appear to be validated elsewhere; uses backticks for escaping
+- Recommendations: Ensure all identifiers are validated/sanitized before interpolation; consider using parameterized queries where possible
+
+**Pass Statements in Exception Handlers:**
+- Risk: Silent exception swallowing without logging
+- Files: `src/backend/src/routes/data_contracts_routes.py` (lines 1272, 1623), `src/backend/src/routes/connection_routes.py` (line 36), `src/backend/src/routes/schema_import_routes.py` (line 50), `src/backend/src/routes/workflows_routes.py` (lines 114, 127)
+- Current mitigation: None
+- Recommendations: At minimum log the exception; consider whether silent handling is appropriate
+
 ## Performance Bottlenecks
 
-**Unbounded Database Queries:**
-- Problem: Multiple `.query().all()` calls without pagination or result limits in tools/commands
-- Files: `src/backend/src/tools/domains.py`, `src/backend/src/tools/teams.py`, `src/backend/src/tools/projects.py`, `src/backend/src/tools/data_products.py`, `src/backend/src/tools/data_contracts.py`
-- Cause: Using hardcoded `.limit(500)` in some places but `.all()` in others; no consistent pagination strategy
-- Improvement path: Implement cursor-based or offset pagination; add query result size limits; monitor slow queries; add database indexes on frequently filtered columns
-
-**281 Database Queries in Repositories:**
-- Problem: Large number of query operations across repositories may indicate N+1 query problems
-- Files: `src/backend/src/repositories/*.py` (aggregate of 281 query operations)
-- Cause: Lack of eager loading, missing relationship preloading (selectinload, joinedload)
-- Improvement path: Profile with SQLAlchemy query logging; use selectinload for relationships; consolidate multiple small queries into single batch query
+**N+1 Query Potential:**
+- Problem: Code comments acknowledge N+1 query risk in data domains
+- Files: `src/backend/src/controller/data_domains_manager.py` (line 187: "might cause N+1 queries if not careful")
+- Cause: Lazy loading relationships without eager loading
+- Improvement path: Use `selectinload` or `joinedload` for relationships; batch-load related data
 
 **Settings Manager Initialization:**
-- Problem: Initialization loads JobsManager, WorkspaceDeployer, and persisted settings synchronously, blocking startup
-- Files: `src/backend/src/controller/settings_manager.py` lines 135-168
-- Cause: Three potentially slow operations (SDK initialization, file I/O, database loading) in constructor
-- Improvement path: Defer heavy initialization; use lazy loading pattern; move to async startup task; implement timeout with fallback
+- Problem: Initialization loads JobsManager, WorkspaceDeployer, and persisted settings synchronously
+- Files: `src/backend/src/controller/settings_manager.py` (2125 lines total)
+- Cause: Multiple potentially slow operations in constructor
+- Improvement path: Defer heavy initialization; use lazy loading pattern; move to async startup task
+
+**Unbounded Query Results:**
+- Problem: Some queries lack pagination limits
+- Files: `src/backend/src/common/workflow_executor.py` (lines 215, 355: `.all()` calls), `src/backend/src/routes/workflows_routes.py` (line 273: `.all()` call)
+- Cause: Missing limit clauses in query builders
+- Improvement path: Add default limits; implement cursor-based pagination for large result sets
 
 **Frontend Component Re-renders:**
 - Problem: Large monolithic components re-render entire UI for minor state changes
-- Files: `src/frontend/src/views/data-contract-details.tsx` (3140 lines), `src/frontend/src/components/data-contracts/data-contract-wizard-dialog.tsx` (2071 lines)
-- Cause: Global state updates trigger top-level re-render; lack of memo/useMemo optimization; no virtualization for lists
-- Improvement path: Extract sub-components with React.memo; use useCallback for handlers; implement virtualization for large lists; split state into smaller stores
+- Files: `src/frontend/src/views/data-contract-details.tsx` (3180 lines), `src/frontend/src/components/data-contracts/data-contract-wizard-dialog.tsx` (2071 lines)
+- Cause: Global state updates trigger top-level re-render; lack of memo/useMemo optimization
+- Improvement path: Extract sub-components with React.memo; use useCallback for handlers; implement virtualization for large lists
 
 ## Fragile Areas
 
 **Data Contract Validation:**
 - Files: `src/backend/src/controller/data_contracts_manager.py` (validate_schema method, validate_contract_text method)
 - Why fragile: Multiple validation paths (format, schema, references), overlapping responsibilities, limited error context
-- Safe modification: Add comprehensive test coverage before modifying validation logic; document all validation rules; create validation utilities module
+- Safe modification: Add comprehensive test coverage before modifying validation logic; document all validation rules
 - Test coverage: Need unit tests for edge cases (circular references, reserved keywords, schema collisions)
 
 **Workflow Executor:**
 - Files: `src/backend/src/common/workflow_executor.py` (1851 lines)
 - Why fragile: Complex state machine, handles multiple workflow types, integrates with external Databricks API, lacks explicit error recovery
-- Safe modification: Add integration tests for each workflow type; implement circuit breaker pattern; add comprehensive logging at each step
+- Safe modification: Add integration tests for each workflow type; implement circuit breaker pattern; add comprehensive logging
 - Test coverage: Missing tests for workflow failure scenarios, timeout handling, partial execution recovery
 
-**Asset Type Determination Logic:**
-- Files: `src/backend/src/controller/data_asset_reviews_manager.py` (lines 65-120)
-- Why fragile: Depends on WorkspaceClient availability, FQN format validation, SDK exceptions; multiple fallback paths
-- Safe modification: Add explicit protocol detection; improve error messages; create abstraction for asset type resolution
-- Test coverage: Need tests for missing/invalid FQN formats, SDK failures, protocol-based asset types (mdm://)
+**Tags Routes Error Handling:**
+- Files: `src/backend/src/routes/tags_routes.py` (repetitive try/except pattern across all endpoints)
+- Why fragile: Same error handling pattern duplicated 12+ times; inconsistent logging; potential for missed error cases
+- Safe modification: Extract error handling to middleware or decorator; standardize error response format
+- Test coverage: Need tests for error paths
 
 **Session Management:**
 - Files: `src/backend/src/common/database.py` (threading, token refresh logic, connection pooling)
 - Why fragile: Thread-local state, OAuth token refresh loop, singleton pattern, potential race conditions
-- Safe modification: Review thread safety of `_oauth_token` and `_token_refresh_lock`; add comprehensive logging for token refresh events
+- Safe modification: Review thread safety of `_oauth_token` and `_token_refresh_lock`; add logging for token refresh events
 - Test coverage: Need concurrent load tests for session creation; tests for token expiration scenarios
 
 ## Scaling Limits
@@ -126,47 +152,46 @@
 - Limit: Performance degrades as operation complexity increases; difficult to parallelize; high memory footprint
 - Scaling path: Extract services (SearchService, DeliveryService, ValidationService); implement event-driven architecture; separate read/write concerns
 
-**Query Performance:**
-- Current capacity: 281 repository queries across codebase; some workloads load 500+ records without filtering
-- Limit: Database becomes bottleneck; response times exceed 2-5 seconds for complex queries; connection pool exhaustion
-- Scaling path: Implement database indexing strategy; add query result pagination throughout; use read replicas for search operations; consider caching layer (Redis)
+**Database Query Volume:**
+- Current capacity: 52 manager classes each potentially making multiple database calls
+- Limit: Connection pool exhaustion under load; slow queries for complex operations
+- Scaling path: Implement database indexing strategy; add query result pagination; use read replicas; consider caching layer
 
-**Frontend Component Rendering:**
-- Current capacity: Single 3000+ line component can render in <1s on modern hardware
-- Limit: Mobile devices, older browsers, low-end laptops experience significant lag; scrolling/interactions stutter
-- Scaling path: Component splitting (done above); virtualization for lists; lazy load dialog contents; implement progressive enhancement
+**Frontend Bundle Size:**
+- Current capacity: Large view components with significant JavaScript
+- Limit: Initial load time; memory usage on low-end devices
+- Scaling path: Code splitting by route; lazy load dialog contents; implement progressive enhancement
 
 ## Dependencies at Risk
 
-**Removed OpenAI Client:**
-- Risk: Code comment indicates OpenAI client was removed, but LLM features may still be referenced
-- Files: `src/backend/src/controller/data_asset_reviews_manager.py` line 14 (commented import)
-- Impact: LLM analysis features will fail at runtime if invoked
-- Migration plan: Document which features depend on LLM; either restore OpenAI integration or remove LLM-dependent features; add feature flags for optional LLM
-
-**Optional MLflow Dependency:**
-- Risk: MLflow imported lazily to prevent startup failures, suggests it's optional but handling is unclear
-- Files: `src/backend/src/controller/data_asset_reviews_manager.py` lines 15-16 (comment about lazy import)
-- Impact: Features requiring MLflow may fail mysteriously if import fails; no clear error messages
-- Migration plan: Document MLflow as optional dependency; create proper feature flag; provide fallback behavior when MLflow unavailable
+**React-Cytoscapejs Type Declarations:**
+- Risk: Library lacks type declarations, requiring `@ts-expect-error` directives
+- Files: `src/frontend/src/components/semantic-models/knowledge-graph.tsx`, `src/frontend/src/components/common/business-lineage-graph.tsx`
+- Impact: No type safety for graph visualization code
+- Migration plan: Create local type declaration file; contribute types to DefinitelyTyped; or switch to typed alternative
 
 ## Missing Critical Features
 
 **Audit Trail for Sensitive Operations:**
-- Problem: No comprehensive audit logging for security-critical operations (role changes, entitlements updates, compliance violations)
+- Problem: No comprehensive audit logging for security-critical operations (role changes, entitlements updates)
 - Blocks: Regulatory compliance (SOX, GDPR, HIPAA), security investigations, breach analysis
 - File references: `src/backend/src/tests/integration/test_teams_routes.py` (audit tests commented out)
 
-**Permission Boundary Enforcement:**
-- Problem: Permissions checked but unclear if all API endpoints enforce user permissions consistently
-- Blocks: Multi-tenant scenarios, user isolation, security posture unclear
-- Test coverage needed: Permission boundary testing across all endpoints
+**Incomplete TODOs:**
+- Problem: Multiple TODO comments indicating unfinished features
+- Files:
+  - `src/backend/src/routes/projects_routes.py:420` - Store project context in session
+  - `src/backend/src/routes/semantic_models_routes.py:1135` - Integrate with DataAssetReviewManager
+  - `src/backend/src/common/workflow_executor.py:464,506,609` - Integrate with TagsManager, implement SQL execution
+  - `src/backend/src/tools/analytics.py:123` - Check user permissions
+  - `src/backend/src/controller/mdm_manager.py:538` - Actually write to master table via Spark
+  - `src/backend/src/controller/data_products_manager.py:2298` - Add team members from contract owner
 
 ## Test Coverage Gaps
 
 **Data Contract Manager Complex Logic:**
 - What's not tested: Schema validation with circular references, complex contract versioning, relationship updates with validation
-- Files: `src/backend/src/controller/data_contracts_manager.py`
+- Files: `src/backend/src/controller/data_contracts_manager.py` (6171 lines)
 - Risk: Critical business logic changes break silently; regressions in validation rules
 - Priority: High
 
@@ -182,18 +207,18 @@
 - Risk: Silent failures, data inconsistency, unrecovered resources
 - Priority: High
 
-**Permission System Enforcement:**
-- What's not tested: User permission isolation across different roles, boundary conditions (user at role change), feature access denials
-- Files: `src/backend/src/common/authorization.py`, route files
-- Risk: Security vulnerability, unauthorized access, privilege escalation
-- Priority: High
+**Tags Routes Error Handling:**
+- What's not tested: Error conditions in tag operations, concurrent modifications, constraint violations
+- Files: `src/backend/src/routes/tags_routes.py`
+- Risk: Unhandled exceptions in production; inconsistent error responses
+- Priority: Medium
 
-**Database Query Performance:**
-- What's not tested: Query performance with realistic data volumes (1000+ records), N+1 detection, slow query identification
-- Files: `src/backend/src/repositories/*.py`
-- Risk: Performance degradation undetected; slow queries in production
+**Search Functionality:**
+- What's not tested: Search with large result sets, concurrent search requests, index consistency
+- Files: `src/backend/src/common/search.py`, `src/backend/src/common/search_registry.py`
+- Risk: Search failures; performance degradation
 - Priority: Medium
 
 ---
 
-*Concerns audit: 2026-03-11*
+*Concerns audit: 2026-03-17*
