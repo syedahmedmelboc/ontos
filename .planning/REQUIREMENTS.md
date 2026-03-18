@@ -34,7 +34,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Intersection Device
 
-- [ ] **INT-01**: CSS utility class for ±25.3° gradient accent (Navy→Blue→Teal)
+- [ ] **INT-01**: CSS utility class for +/-25.3 degree gradient accent (Navy->Blue->Teal)
 - [ ] **INT-02**: Intersection device applied to header divider or key UI element
 
 ## v2 Requirements
@@ -58,12 +58,12 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Backend changes | Visual rebrand only — frontend styling changes |
+| Backend changes | Visual rebrand only - frontend styling changes |
 | Feature changes | No new functionality, only visual identity update |
 | Content/terminology | Keeping "Ontos" naming in code, API, and internal references |
-| Mobile app | Web platform only — no mobile app changes |
-| VIC font CDN | Licensing requires self-hosting — no external font services |
-| Real-time theme toggle | No runtime theme switching — build-time brand application |
+| Mobile app | Web platform only - no mobile app changes |
+| VIC font CDN | Licensing requires self-hosting - no external font services |
+| Real-time theme toggle | No runtime theme switching - build-time brand application |
 
 ## Traceability
 
@@ -90,8 +90,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v1 requirements: 15 total
 - Mapped to phases: 15
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after roadmap creation*
