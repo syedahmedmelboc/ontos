@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Color System
 
-- [ ] **COLOR-01**: Brand Victoria palette applied to CSS variables in `:root` block (Navy, Blue, Teal, Grey)
-- [ ] **COLOR-02**: Dark mode variants in `.dark` block with accessible contrast ratios
-- [ ] **COLOR-03**: Semantic color mapping (primary=Navy, secondary=Blue, accent=Teal, destructive=Red)
-- [ ] **COLOR-04**: Chart colors (`--chart-1` through `--chart-5`) updated to Brand Victoria palette
+- [x] **COLOR-01**: Brand Victoria palette applied to CSS variables in `:root` block (Navy, Blue, Teal, Grey)
+- [x] **COLOR-02**: Dark mode variants in `.dark` block with accessible contrast ratios
+- [x] **COLOR-03**: Semantic color mapping (primary=Navy, secondary=Blue, accent=Teal, destructive=Red)
+- [x] **COLOR-04**: Chart colors (`--chart-1` through `--chart-5`) updated to Brand Victoria palette
 
 ### Typography
 
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COLOR-01 | Phase 1 | Pending |
-| COLOR-02 | Phase 1 | Pending |
-| COLOR-03 | Phase 1 | Pending |
-| COLOR-04 | Phase 1 | Pending |
+| COLOR-01 | Phase 1 | Complete |
+| COLOR-02 | Phase 1 | Complete |
+| COLOR-03 | Phase 1 | Complete |
+| COLOR-04 | Phase 1 | Complete |
 | TYPE-01 | Phase 2 | Pending |
 | TYPE-02 | Phase 2 | Pending |
 | TYPE-03 | Phase 2 | Pending |
@@ -94,4 +94,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after roadmap creation*
+*Last updated: 2026-03-19 after Phase 1 completion*
