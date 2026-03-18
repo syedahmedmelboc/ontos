@@ -42,12 +42,12 @@ Plans:
   2. User sees DTP Victoria logo in the sidebar header
   3. Browser tab shows DTP Victoria favicon and "DTP Data Governance" title
   4. Text falls back to Arial if VIC fonts fail to load (per Brand Victoria guidelines)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Add VIC font files and @font-face declarations
-- [ ] 02-02: Update Tailwind config and apply typography
-- [ ] 02-03: Replace logo, favicon, and browser title
+- [ ] 02-01-PLAN.md — Copy VIC font files and add @font-face declarations to index.css
+- [ ] 02-02-PLAN.md — Update Tailwind config with VIC font family and Arial fallback
+- [ ] 02-03-PLAN.md — Replace logo, favicon, and browser title with DTP Victoria branding
 
 ### Phase 3: Hardcoded Color Audit
 **Goal**: No violet, purple, or non-brand gray colors remain in component code
