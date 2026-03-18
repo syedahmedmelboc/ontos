@@ -28,10 +28,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User sees appropriately adjusted Brand Victoria colors in dark mode with accessible contrast
   3. All Shadcn UI components (buttons, inputs, cards) render with Brand Victoria palette
   4. Charts and data visualizations use Brand Victoria color scheme
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: Update CSS variables in index.css
+- [ ] 01-01-PLAN.md — Update CSS variables in index.css with Brand Victoria HSL values (light + dark modes)
 
 ### Phase 2: Typography & Logo
 **Goal**: DTP Victoria brand identity is visible in fonts, logo, and browser chrome
@@ -82,7 +82,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Color System | 0/1 | Not started | - |
+| 1. Color System | 0/1 | Ready to execute | - |
 | 2. Typography & Logo | 0/3 | Not started | - |
 | 3. Hardcoded Color Audit | 0/2 | Not started | - |
 | 4. Intersection Device | 0/1 | Not started | - |
