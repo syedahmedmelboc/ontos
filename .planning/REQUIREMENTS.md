@@ -22,9 +22,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Logo & Identity
 
-- [ ] **LOGO-01**: DTP Victoria logo replaces default logo in sidebar (`UnityCatalogLogo` component)
-- [ ] **LOGO-02**: Favicon updated to DTP Victoria icon (SVG format)
-- [ ] **LOGO-03**: Browser title updated to "DTP Data Governance" in `index.html`
+- [x] **LOGO-01**: DTP Victoria logo replaces default logo in sidebar (`UnityCatalogLogo` component)
+- [x] **LOGO-02**: Favicon updated to DTP Victoria icon (SVG format)
+- [x] **LOGO-03**: Browser title updated to "DTP Data Governance" in `index.html`
 
 ### Hardcoded Colors
 
@@ -78,9 +78,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TYPE-01 | Phase 2 | Complete |
 | TYPE-02 | Phase 2 | Complete |
 | TYPE-03 | Phase 2 | Complete |
-| LOGO-01 | Phase 2 | Pending |
-| LOGO-02 | Phase 2 | Pending |
-| LOGO-03 | Phase 2 | Pending |
+| LOGO-01 | Phase 2 | Complete |
+| LOGO-02 | Phase 2 | Complete |
+| LOGO-03 | Phase 2 | Complete |
 | HARD-01 | Phase 3 | Pending |
 | HARD-02 | Phase 3 | Pending |
 | HARD-03 | Phase 3 | Pending |
