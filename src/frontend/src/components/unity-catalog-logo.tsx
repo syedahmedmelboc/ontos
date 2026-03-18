@@ -16,7 +16,7 @@ export function UnityCatalogLogo({ className }: UnityCatalogLogoProps) {
   // Use custom logo if set and valid, otherwise fall back to default
   const logoSrc = customLogoUrl && !logoError 
     ? customLogoUrl 
-    : getAssetPath('/ontos-logo.svg');
+    : getAssetPath('/ontos-logo.png');
   
   return (
     <img
