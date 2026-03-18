@@ -16,9 +16,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Typography
 
-- [ ] **TYPE-01**: VIC font files self-hosted in `public/fonts/` (Book, SemiBold, Bold weights)
-- [ ] **TYPE-02**: `@font-face` declarations added to `index.css` with WOFF2 format
-- [ ] **TYPE-03**: Arial as fallback font in font-family stack per Brand Victoria guidelines
+- [x] **TYPE-01**: VIC font files self-hosted in `public/fonts/` (Book, SemiBold, Bold weights)
+- [x] **TYPE-02**: `@font-face` declarations added to `index.css` with WOFF2 format
+- [x] **TYPE-03**: Arial as fallback font in font-family stack per Brand Victoria guidelines
 
 ### Logo & Identity
 
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COLOR-02 | Phase 1 | Complete |
 | COLOR-03 | Phase 1 | Complete |
 | COLOR-04 | Phase 1 | Complete |
-| TYPE-01 | Phase 2 | Pending |
-| TYPE-02 | Phase 2 | Pending |
-| TYPE-03 | Phase 2 | Pending |
+| TYPE-01 | Phase 2 | Complete |
+| TYPE-02 | Phase 2 | Complete |
+| TYPE-03 | Phase 2 | Complete |
 | LOGO-01 | Phase 2 | Pending |
 | LOGO-02 | Phase 2 | Pending |
 | LOGO-03 | Phase 2 | Pending |
