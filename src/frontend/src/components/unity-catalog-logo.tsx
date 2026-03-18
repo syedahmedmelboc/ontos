@@ -20,7 +20,7 @@ export function UnityCatalogLogo({ className }: UnityCatalogLogoProps) {
   
   return (
     <img
-      className={cn('h-10 w-10 mr-2', className)}
+      className={cn('h-10 w-auto mr-2', className)}
       src={logoSrc}
       alt="Unity Catalog Logo"
       onError={() => {
