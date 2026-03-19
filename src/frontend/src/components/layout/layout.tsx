@@ -41,9 +41,9 @@ export default function Layout({ children }: LayoutProps) {
           onClick={togglePanel}
           className="fixed right-0 top-1/2 -translate-y-1/2 z-40
             flex flex-col items-center gap-2 px-1.5 py-4
-            bg-gradient-to-b from-violet-500 to-purple-600
+            bg-gradient-to-b from-teal-600 to-blue-700
             text-white rounded-l-xl shadow-lg
-            hover:px-2.5 hover:shadow-violet-500/25 hover:shadow-xl
+            hover:px-2.5 hover:shadow-teal-500/25 hover:shadow-xl
             transition-all duration-200"
         >
           <Sparkles className="h-4 w-4 shrink-0" />
