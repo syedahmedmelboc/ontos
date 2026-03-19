@@ -37,10 +37,10 @@ const baseNodeClass = "rounded-lg shadow-md border-2 w-[180px] transition-all ho
 // Each node type has a distinct color theme with proper contrast
 const nodeColorStyles = {
   trigger: {
-    card: "border-purple-500 bg-purple-50 dark:bg-purple-900/50 dark:border-purple-400",
-    icon: "text-purple-600 dark:text-purple-300",
-    ring: "ring-purple-500 dark:ring-purple-400",
-    handle: "!bg-purple-500 dark:!bg-purple-400",
+    card: "border-teal-500 bg-teal-50 dark:bg-teal-900/50 dark:border-teal-400",
+    icon: "text-teal-600 dark:text-teal-300",
+    ring: "ring-teal-500 dark:ring-teal-400",
+    handle: "!bg-teal-500 dark:!bg-teal-400",
   },
   validation: {
     card: "border-blue-500 bg-blue-50 dark:bg-blue-900/50 dark:border-blue-400",
@@ -69,7 +69,7 @@ const nodeColorStyles = {
   },
   script: {
     card: "border-slate-500 bg-slate-100 dark:bg-slate-800/70 dark:border-slate-400",
-    icon: "text-slate-600 dark:text-slate-300",
+    icon: "text-muted-foreground",
     ring: "ring-slate-500 dark:ring-slate-400",
   },
   policyCheck: {
@@ -130,12 +130,12 @@ export const TriggerNode = memo(({ data, selected }: NodeProps<TriggerNodeData>)
         </div>
         <div className="flex flex-wrap gap-1 mt-1">
           {trigger.entity_types.slice(0, 3).map(et => (
-            <Badge key={et} variant="secondary" className="text-xs px-1 py-0 dark:bg-purple-800/50 dark:text-purple-200">
+            <Badge key={et} variant="secondary" className="text-xs px-1 py-0 dark:bg-teal-800/50 dark:text-teal-200">
               {getEntityTypeLabel(et, t)}
             </Badge>
           ))}
           {trigger.entity_types.length > 3 && (
-            <Badge variant="secondary" className="text-xs px-1 py-0 dark:bg-purple-800/50 dark:text-purple-200">
+            <Badge variant="secondary" className="text-xs px-1 py-0 dark:bg-teal-800/50 dark:text-teal-200">
               +{trigger.entity_types.length - 3}
             </Badge>
           )}
@@ -331,12 +331,12 @@ export const DefaultStepNode = memo((props: NodeProps<StepNodeData>) => {
       <Handle type="target" position={Position.Top} className="!bg-slate-400 dark:!bg-slate-500" />
       <CardHeader className="p-3 pb-2">
         <CardTitle className={`${nodeTextStyles.title} flex items-center gap-2`}>
-          <MessageSquare className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
           {step.name || step.step_type || 'Step'}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <Badge variant="outline" className="text-xs dark:border-slate-400/50 dark:text-slate-200">
+        <Badge variant="outline" className="text-xs dark:border-muted-foreground/50 text-muted-foreground">
           {step.step_type.replace('_', ' ')}
         </Badge>
       </CardContent>
@@ -386,7 +386,7 @@ export const ConditionalNode = memo((props: NodeProps<StepNodeData>) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <Badge variant="outline" className="text-xs dark:border-violet-400/50 dark:text-violet-200">conditional</Badge>
+        <Badge variant="outline" className="text-xs dark:border-teal-400/50 dark:text-teal-200">conditional</Badge>
         {(props.data.step.config as { condition?: string })?.condition && (
           <div className={`${nodeTextStyles.description} mt-1 truncate max-w-[140px] font-mono`}>
             {((props.data.step.config as { condition?: string }).condition || '').slice(0, 25)}...
@@ -413,7 +413,7 @@ export const ScriptNode = memo((props: NodeProps<StepNodeData>) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <Badge variant="outline" className="text-xs dark:border-slate-400/50 dark:text-slate-200">
+        <Badge variant="outline" className="text-xs dark:border-muted-foreground/50 text-muted-foreground">
           {(props.data.step.config as { language?: string })?.language || 'script'}
         </Badge>
       </CardContent>
