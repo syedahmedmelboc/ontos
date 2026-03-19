@@ -59,7 +59,7 @@ const statusColors: Record<ConceptStatus, string> = {
   under_review: 'bg-yellow-100 text-yellow-700',
   approved: 'bg-blue-100 text-blue-700',
   published: 'bg-green-100 text-green-700',
-  certified: 'bg-purple-100 text-purple-700',
+  certified: 'bg-teal-100 text-teal-700',
   deprecated: 'bg-orange-100 text-orange-700',
   archived: 'bg-red-100 text-red-700',
 };
@@ -507,7 +507,7 @@ export const ConceptEditorDialog: React.FC<ConceptEditorDialogProps> = ({
                   {concept.certified_at && (
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <Shield className="h-4 w-4 text-purple-500" />
+                        <Shield className="h-4 w-4 text-primary" />
                         <span>{t('Certified')}: {new Date(concept.certified_at).toLocaleDateString()}</span>
                       </div>
                       {concept.certification_expires_at && (

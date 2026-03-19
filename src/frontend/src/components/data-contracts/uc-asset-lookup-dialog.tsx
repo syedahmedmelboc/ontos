@@ -85,10 +85,10 @@ function getIcon(type: UCAssetType | string): React.ReactNode {
       return <Table className="h-4 w-4 text-orange-500" />
     case UCAssetType.VIEW:
     case 'view':
-      return <Layout className="h-4 w-4 text-purple-500" />
+      return <Layout className="h-4 w-4 text-primary" />
     case UCAssetType.MATERIALIZED_VIEW:
     case 'materialized_view':
-      return <Layers className="h-4 w-4 text-purple-600" />
+      return <Layers className="h-4 w-4 text-primary" />
     case UCAssetType.STREAMING_TABLE:
     case 'streaming_table':
       return <Radio className="h-4 w-4 text-orange-600" />

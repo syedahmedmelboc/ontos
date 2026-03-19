@@ -115,7 +115,7 @@ export default function About() {
                 <span className={cn(
                   "absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full z-10",
                   feature.maturity === 'beta' ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" : "",
-                  feature.maturity === 'alpha' ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" : ""
+                  feature.maturity === 'alpha' ? "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300" : ""
                 )}>
                   {feature.maturity.toUpperCase()}
                 </span>

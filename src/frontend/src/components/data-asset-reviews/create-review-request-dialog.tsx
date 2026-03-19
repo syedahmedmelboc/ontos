@@ -129,7 +129,7 @@ export default function CreateReviewRequestDialog({ isOpen, onOpenChange, api, o
             case 'catalog': return <Folder className="h-4 w-4 text-blue-500" />;
             case 'schema': return <FolderOpen className="h-4 w-4 text-green-500" />;
             case AssetType.TABLE: return <Table className="h-4 w-4 text-orange-500" />;
-            case AssetType.VIEW: return <Layout className="h-4 w-4 text-purple-500" />;
+            case AssetType.VIEW: return <Layout className="h-4 w-4 text-primary" />;
             case AssetType.FUNCTION: return <FunctionSquare className="h-4 w-4 text-red-500" />;
             default: return null;
         }

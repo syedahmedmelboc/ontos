@@ -120,7 +120,7 @@ export default function RequiredActionsSection() {
       },
       contract: {
         label: 'Contract',
-        className: 'bg-purple-500/15 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+        className: 'bg-teal-500/15 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300'
       },
       product: {
         label: 'Product',

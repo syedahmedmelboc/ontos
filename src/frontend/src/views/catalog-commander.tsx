@@ -576,7 +576,7 @@ const CatalogCommander: React.FC = () => {
       case 'table':
         return <Table className="h-4 w-4 text-orange-500" />;
       case 'view':
-        return <Layout className="h-4 w-4 text-purple-500" />;
+        return <Layout className="h-4 w-4 text-primary" />;
       default:
         return null;
     }

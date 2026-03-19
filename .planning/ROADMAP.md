@@ -13,8 +13,8 @@ A visual rebranding project to transform the Ontos data governance platform into
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Color System** - Apply Brand Victoria color palette to CSS variables for both light and dark modes
-- [ ] **Phase 2: Typography & Logo** - Self-host VIC fonts and replace Ontos branding with DTP Victoria identity
-- [ ] **Phase 3: Hardcoded Color Audit** - Replace all hardcoded violet/purple/gray Tailwind classes with Brand Victoria equivalents
+- [x] **Phase 2: Typography & Logo** - Self-host VIC fonts and replace Ontos branding with DTP Victoria identity
+- [x] **Phase 3: Hardcoded Color Audit** - Replace all hardcoded violet/purple/gray Tailwind classes with Brand Victoria equivalents
 - [ ] **Phase 4: Intersection Device** - Add distinctive Brand Victoria gradient accent element
 
 ## Phase Details
@@ -45,9 +45,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Copy VIC font files and add @font-face declarations to index.css
-- [ ] 02-02-PLAN.md — Update Tailwind config with VIC font family and Arial fallback
-- [ ] 02-03-PLAN.md — Replace logo, favicon, and browser title with DTP Victoria branding
+- [x] 02-01-PLAN.md — Copy VIC font files and add @font-face declarations to index.css
+- [x] 02-02-PLAN.md — Update Tailwind config with VIC font family and Arial fallback
+- [x] 02-03-PLAN.md — Replace logo, favicon, and browser title with DTP Victoria branding
 
 ### Phase 3: Hardcoded Color Audit
 **Goal**: No violet, purple, or non-brand gray colors remain in component code
@@ -60,8 +60,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Replace violet-* and purple-* Tailwind classes with Brand Victoria equivalents (teal/blue)
-- [ ] 03-02-PLAN.md — Replace dark:bg-gray-* and dark:text-slate-* patterns with semantic tokens
+- [x] 03-01-PLAN.md — Replace violet-* and purple-* Tailwind classes with Brand Victoria equivalents (teal/blue)
+- [x] 03-02-PLAN.md — Replace dark:bg-gray-* and dark:text-slate-* patterns with semantic tokens
 
 ### Phase 4: Intersection Device
 **Goal**: Distinctive Brand Victoria visual accent enhances key UI elements
@@ -83,6 +83,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Color System | 1/1 | Complete | 2026-03-19 |
-| 2. Typography & Logo | 0/3 | Not started | - |
-| 3. Hardcoded Color Audit | 0/2 | Not started | - |
+| 2. Typography & Logo | 3/3 | Complete | 2026-03-19 |
+| 3. Hardcoded Color Audit | 2/2 | Complete | 2026-03-19 |
 | 4. Intersection Device | 0/1 | Not started | - |
