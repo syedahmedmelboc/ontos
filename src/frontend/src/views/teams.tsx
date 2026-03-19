@@ -209,8 +209,8 @@ export default function TeamsView() {
                   variant={member.member_type === 'user' ? 'default' : 'secondary'}
                   className={`text-xs truncate w-fit flex items-center gap-1 ${
                     member.member_type === 'user'
-                      ? 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300'
+                      ? 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
                   }`}
                 >
                   {member.member_type === 'user' ? (

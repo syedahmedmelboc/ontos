@@ -225,7 +225,7 @@ export default function Compliance() {
       high: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
       critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     };
-    return variants[severity as keyof typeof variants] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    return variants[severity as keyof typeof variants] || 'bg-muted text-muted-foreground';
   };
 
   const columns: ColumnDef<CompliancePolicy>[] = [

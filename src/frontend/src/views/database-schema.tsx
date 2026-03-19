@@ -70,7 +70,7 @@ function TableNode({ data }: { data: Table }) {
   return (
     <>
       <Handle type="target" position={Position.Left} style={{ visibility: 'hidden' }} />
-      <Card className="min-w-[250px] max-w-[300px] shadow-lg border-border dark:border-slate-700 dark:bg-slate-800">
+      <Card className="min-w-[250px] max-w-[300px] shadow-lg border-border bg-card">
         {/* Only the header is draggable via drag-handle class */}
         <CardHeader className="drag-handle bg-primary text-primary-foreground py-2 px-3 cursor-move">
           <div className="flex items-start justify-between gap-2">
@@ -110,12 +110,12 @@ function TableNode({ data }: { data: Table }) {
                 {data.columns.map((col, idx) => (
                   <tr
                     key={idx}
-                    className={`border-b dark:border-slate-600 last:border-b-0 ${
+                    className={`border-b border-border last:border-b-0 ${
                       col.primary_key
                         ? 'bg-yellow-50 dark:bg-yellow-900/50'
                         : col.foreign_key
                         ? 'bg-blue-50 dark:bg-blue-900/50'
-                        : 'dark:bg-slate-800'
+                        : 'bg-card'
                     }`}
                   >
                     <td className="py-1 px-2 font-mono">
@@ -130,7 +130,7 @@ function TableNode({ data }: { data: Table }) {
                             🔗
                           </span>
                         )}
-                        <span className="font-semibold truncate dark:text-slate-100">{col.name}</span>
+                        <span className="font-semibold truncate text-foreground">{col.name}</span>
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                         {col.type}
