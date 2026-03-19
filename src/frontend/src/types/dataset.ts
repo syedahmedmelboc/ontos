@@ -146,9 +146,9 @@ export const DATASET_INSTANCE_STATUS_LABELS: Record<DatasetInstanceStatus, strin
 };
 
 export const DATASET_INSTANCE_STATUS_COLORS: Record<DatasetInstanceStatus, string> = {
-  active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  deprecated: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  retired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  active: 'bg-green-100 text-green-800',
+  deprecated: 'bg-yellow-100 text-yellow-800',
+  retired: 'bg-red-100 text-red-800',
 };
 
 export const DATASET_INSTANCE_ROLE_LABELS: Record<DatasetInstanceRole, string> = {
@@ -161,12 +161,12 @@ export const DATASET_INSTANCE_ROLE_LABELS: Record<DatasetInstanceRole, string> =
 };
 
 export const DATASET_INSTANCE_ROLE_COLORS: Record<DatasetInstanceRole, string> = {
-  undefined: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  main: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  dimension: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  lookup: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
-  reference: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  staging: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+  undefined: 'bg-muted text-muted-foreground',
+  main: 'bg-blue-100 text-blue-800',
+  dimension: 'bg-secondary text-secondary-foreground',
+  lookup: 'bg-teal-100 text-teal-800',
+  reference: 'bg-muted text-muted-foreground',
+  staging: 'bg-orange-100 text-orange-800',
 };
 
 export const DATASET_INSTANCE_ROLE_ICONS: Record<DatasetInstanceRole, string> = {
@@ -188,12 +188,12 @@ export const DATASET_INSTANCE_ENVIRONMENT_LABELS: Record<DatasetInstanceEnvironm
 };
 
 export const DATASET_INSTANCE_ENVIRONMENT_COLORS: Record<DatasetInstanceEnvironment, string> = {
-  dev: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  staging: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  prod: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  test: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  qa: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  uat: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300',
+  dev: 'bg-blue-100 text-blue-800',
+  staging: 'bg-secondary text-secondary-foreground',
+  prod: 'bg-green-100 text-green-800',
+  test: 'bg-muted text-muted-foreground',
+  qa: 'bg-orange-100 text-orange-800',
+  uat: 'bg-cyan-100 text-cyan-800',
 };
 
 // =============================================================================
@@ -349,9 +349,9 @@ export const DATASET_STATUS_LABELS: Record<DatasetStatus, string> = {
 };
 
 export const DATASET_STATUS_COLORS: Record<DatasetStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  in_review: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
-  active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  deprecated: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  retired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  draft: 'bg-muted text-muted-foreground',
+  in_review: 'bg-amber-100 text-amber-800',
+  active: 'bg-green-100 text-green-800',
+  deprecated: 'bg-yellow-100 text-yellow-800',
+  retired: 'bg-red-100 text-red-800',
 };
