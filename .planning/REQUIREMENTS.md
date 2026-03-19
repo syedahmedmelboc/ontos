@@ -34,8 +34,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Intersection Device
 
-- [ ] **INT-01**: CSS utility class for +/-25.3 degree gradient accent (Navy->Blue->Teal)
-- [ ] **INT-02**: Intersection device applied to header divider or key UI element
+- [x] **INT-01**: CSS utility class for +/-25.3 degree gradient accent (Navy->Blue->Teal)
+- [x] **INT-02**: Intersection device applied to header divider or key UI element
 
 ## v2 Requirements
 
@@ -84,8 +84,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HARD-01 | Phase 3 | Pending |
 | HARD-02 | Phase 3 | Pending |
 | HARD-03 | Phase 3 | Pending |
-| INT-01 | Phase 4 | Pending |
-| INT-02 | Phase 4 | Pending |
+| INT-01 | Phase 4 | Complete |
+| INT-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total
