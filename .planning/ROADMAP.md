@@ -70,10 +70,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User sees a 25.3-degree gradient accent (Navy to Blue to Teal) on header dividers
   2. Intersection device CSS utility class is reusable for future brand elements
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: Create intersection device CSS utility and apply to UI
+- [ ] 04-01-PLAN.md — Create intersection device CSS utility classes and apply gradient bars to header and sidebar dividers
 
 ## Progress
 
