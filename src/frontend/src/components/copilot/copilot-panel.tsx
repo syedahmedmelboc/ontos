@@ -38,7 +38,7 @@ function CopilotMessage({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
       {!isUser && (
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-600 to-blue-700 flex items-center justify-center shrink-0">
           <Sparkles className="w-3 h-3 text-white" />
         </div>
       )}
@@ -263,7 +263,7 @@ export default function CopilotPanel() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-600 to-blue-700 flex items-center justify-center">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
@@ -351,7 +351,7 @@ export default function CopilotPanel() {
                       <X className="h-3 w-3" />
                     </Button>
                     <div className="flex items-start gap-2 pr-6">
-                      <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                      <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                       <div>
                         <p className="text-sm font-medium">{t('search:copilot.welcome')}</p>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -389,7 +389,7 @@ export default function CopilotPanel() {
                 ))}
                 {isLoading && (
                   <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-600 to-blue-700 flex items-center justify-center shrink-0">
                       <Sparkles className="w-3 h-3 text-white" />
                     </div>
                     <div className="bg-muted rounded-lg px-3 py-2 flex items-center gap-2">
