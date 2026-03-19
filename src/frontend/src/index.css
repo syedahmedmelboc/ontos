@@ -175,3 +175,40 @@
 
 /* Note: text-muted-foreground is now handled by semantic tokens (Phase 1)
    and automatically supports dark mode - no override needed */
+
+@layer utilities {
+  /* Brand Victoria Intersection Device - +/-25.3 degree gradient accent */
+  /* Source: Brand Victoria Guidelines - gradient from triangle logo */
+
+  /* Base intersection device gradient - use on any element needing brand accent */
+  .intersection-device {
+    background: linear-gradient(
+      25.3deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+  }
+
+  /* Horizontal bar variant for dividers - 2px height standard */
+  .intersection-device-bar {
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(
+      25.3deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+  }
+
+  /* Reverse direction variant for alternative layouts */
+  .intersection-device-reverse {
+    background: linear-gradient(
+      -25.3deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+  }
+}
