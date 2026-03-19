@@ -71,7 +71,7 @@ function Message({ message, debugInfo, onRerun, onCopyToInput }: MessageProps) {
           flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
           ${isUser 
             ? 'bg-sky-500 dark:bg-sky-600 text-white' 
-            : 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+            : 'bg-gradient-to-br from-teal-600 to-blue-700 text-white'
           }
         `}>
           {isUser ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
@@ -719,7 +719,7 @@ export default function LLMSearch() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-blue-700 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               {t('search:llm.title')}
@@ -745,8 +745,8 @@ export default function LLMSearch() {
         <ScrollArea className="h-full p-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-6 py-8">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-violet-500" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-600/20 to-blue-700/20 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-primary" />
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">{t('search:llm.welcomeTitle')}</h3>
@@ -771,7 +771,7 @@ export default function LLMSearch() {
               {/* Loading indicator */}
               {isLoading && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-blue-700 flex items-center justify-center">
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div className="bg-muted rounded-lg px-4 py-3 flex items-center gap-2">
