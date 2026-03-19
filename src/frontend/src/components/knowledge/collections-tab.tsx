@@ -60,7 +60,7 @@ const typeIcons: Record<CollectionType, React.ReactNode> = {
 const typeColors: Record<CollectionType, string> = {
   glossary: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   taxonomy: 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30',
-  ontology: 'bg-violet-500/20 text-violet-700 dark:text-violet-400 border-violet-500/30',
+  ontology: 'bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-500/30',
 };
 
 const scopeIcons: Record<ScopeLevel, React.ReactNode> = {

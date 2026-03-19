@@ -35,7 +35,7 @@ export default function LLMConsentDialog({
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <SparklesIcon className="w-5 h-5 text-purple-500" />
+                        <SparklesIcon className="w-5 h-5 text-primary" />
                         AI-Powered Analysis
                     </DialogTitle>
                     <DialogDescription>

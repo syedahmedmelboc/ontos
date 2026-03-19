@@ -46,7 +46,7 @@ const relationshipColors: Record<string, string> = {
   broader: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/30',
   narrower: 'bg-green-500/10 text-green-600 border-green-500/30',
   related: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
-  domain: 'bg-violet-500/10 text-violet-600 border-violet-500/30',
+  domain: 'bg-teal-500/10 text-teal-600 border-teal-500/30',
   range: 'bg-pink-500/10 text-pink-600 border-pink-500/30',
   sameAs: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/30',
 };

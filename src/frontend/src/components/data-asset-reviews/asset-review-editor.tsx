@@ -358,7 +358,7 @@ export default function AssetReviewEditor({
             {llmConfig && llmConfig.enabled && (asset.asset_type === AssetType.VIEW || asset.asset_type === AssetType.FUNCTION || asset.asset_type === AssetType.NOTEBOOK) && (
                 <div className="mt-6 border-t space-y-3">
                     <h4 className="font-medium text-lg flex items-center">
-                        <SparklesIcon className="w-5 h-5 mr-2 text-purple-500" /> AI Assisted Review
+                        <SparklesIcon className="w-5 h-5 mr-2 text-primary" /> AI Assisted Review
                     </h4>
                     <Button
                         onClick={handleAiAnalysisClick}

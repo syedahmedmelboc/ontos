@@ -21,7 +21,7 @@ const centers: CostCenter[] = ['INFRASTRUCTURE', 'HR', 'STORAGE', 'MAINTENANCE',
 const centerColors: Record<string, string> = {
   INFRASTRUCTURE: '#3b82f6', // blue-500
   HR: '#22c55e',             // green-500
-  STORAGE: '#8b5cf6',        // violet-500
+  STORAGE: '#14b8a6',        // teal-500
   MAINTENANCE: '#f59e0b',    // amber-500
   OTHER: '#64748b',          // slate-500
 };

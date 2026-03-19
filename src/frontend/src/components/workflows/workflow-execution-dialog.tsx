@@ -103,8 +103,8 @@ function SimpleWorkflowFlow({
     <div className="space-y-4 p-4">
       {/* Trigger */}
       {workflow.trigger && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border-2 border-purple-500">
-          <Zap className="h-5 w-5 text-purple-500" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-teal-50 dark:bg-teal-950/30 border-2 border-teal-500">
+          <Zap className="h-5 w-5 text-primary" />
           <div>
             <div className="font-medium text-sm">Trigger</div>
             <div className="text-xs text-muted-foreground">

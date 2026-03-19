@@ -63,9 +63,9 @@ const nodeColorStyles = {
     ring: "ring-teal-500 dark:ring-teal-400",
   },
   conditional: {
-    card: "border-violet-500 bg-violet-50 dark:bg-violet-900/50 dark:border-violet-400",
-    icon: "text-violet-600 dark:text-violet-300",
-    ring: "ring-violet-500 dark:ring-violet-400",
+    card: "border-teal-500 bg-teal-50 dark:bg-teal-900/50 dark:border-teal-400",
+    icon: "text-teal-600 dark:text-teal-300",
+    ring: "ring-teal-500 dark:ring-teal-400",
   },
   script: {
     card: "border-slate-500 bg-slate-100 dark:bg-slate-800/70 dark:border-slate-400",
@@ -102,7 +102,7 @@ const nodeColorStyles = {
 // Shared text styles for better dark mode visibility
 const nodeTextStyles = {
   title: "text-sm font-medium text-foreground",
-  description: "text-xs text-muted-foreground dark:text-slate-300",
+  description: "text-xs text-muted-foreground",
   badge: "text-xs",
 };
 

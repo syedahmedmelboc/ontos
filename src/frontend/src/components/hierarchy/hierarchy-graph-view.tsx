@@ -37,13 +37,13 @@ const TYPE_ROUTE_MAP: Record<string, string> = {
 
 const TYPE_COLOR: Record<string, { bg: string; border: string; text: string }> = {
   System:         { bg: 'bg-blue-500/10',    border: 'border-blue-500/40',    text: 'text-blue-600 dark:text-blue-400' },
-  DataDomain:     { bg: 'bg-purple-500/10',  border: 'border-purple-500/40',  text: 'text-purple-600 dark:text-purple-400' },
+  DataDomain:     { bg: 'bg-blue-500/10',  border: 'border-blue-500/40',  text: 'text-blue-600 dark:text-blue-400' },
   DataProduct:    { bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-600 dark:text-emerald-400' },
   Dataset:        { bg: 'bg-amber-500/10',   border: 'border-amber-500/40',   text: 'text-amber-600 dark:text-amber-400' },
   Table:          { bg: 'bg-orange-500/10',  border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400' },
   View:           { bg: 'bg-teal-500/10',    border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400' },
   Column:         { bg: 'bg-slate-500/10',   border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400' },
-  Schema:         { bg: 'bg-violet-500/10',  border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400' },
+  Schema:         { bg: 'bg-teal-500/10',  border: 'border-teal-500/40',  text: 'text-teal-600 dark:text-teal-400' },
   DataContract:   { bg: 'bg-pink-500/10',    border: 'border-pink-500/40',    text: 'text-pink-600 dark:text-pink-400' },
 };
 
@@ -269,13 +269,13 @@ export function HierarchyGraphView({ rootNode, className }: HierarchyGraphViewPr
             const type = (n.data as HierarchyNodeData)?.entityType;
             const colors: Record<string, string> = {
               System: '#3b82f6',
-              DataDomain: '#a855f7',
+              DataDomain: '#3b82f6',
               DataProduct: '#10b981',
               Dataset: '#f59e0b',
               Table: '#f97316',
               View: '#14b8a6',
               Column: '#64748b',
-              Schema: '#8b5cf6',
+              Schema: '#14b8a6',
               DataContract: '#ec4899',
             };
             return colors[type] || '#6b7280';

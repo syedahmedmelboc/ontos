@@ -50,16 +50,16 @@ interface ConceptsTabProps {
 const typeIcons: Record<string, React.ReactNode> = {
   concept: <Layers className="h-4 w-4 text-emerald-500" />,
   class: <BookOpen className="h-4 w-4 text-blue-500" />,
-  property: <Zap className="h-4 w-4 text-purple-500" />,
-  individual: <User className="h-4 w-4 text-violet-500" />,
+  property: <Zap className="h-4 w-4 text-primary" />,
+  individual: <User className="h-4 w-4 text-primary" />,
   term: <Layers className="h-4 w-4 text-emerald-500" />,
 };
 
 const typeColors: Record<string, string> = {
   concept: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
   class: 'bg-blue-500/20 text-blue-700 dark:text-blue-400',
-  property: 'bg-purple-500/20 text-purple-700 dark:text-purple-400',
-  individual: 'bg-violet-500/20 text-violet-700 dark:text-violet-400',
+  property: 'bg-teal-500/20 text-teal-700 dark:text-teal-400',
+  individual: 'bg-teal-500/20 text-teal-700 dark:text-teal-400',
   term: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400',
 };
 
