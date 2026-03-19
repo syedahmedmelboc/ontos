@@ -57,11 +57,11 @@ Plans:
   1. User sees consistent Brand Victoria colors across all pages (no stray purple/violet)
   2. Dark mode components use brand-aligned gray/slate alternatives
   3. All identified files (11 feature files with hardcoded colors) render with semantic tokens
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Replace violet-* and purple-* Tailwind classes
-- [ ] 03-02: Replace dark:bg-gray-* and dark:text-slate-* patterns
+- [ ] 03-01-PLAN.md — Replace violet-* and purple-* Tailwind classes with Brand Victoria equivalents (teal/blue)
+- [ ] 03-02-PLAN.md — Replace dark:bg-gray-* and dark:text-slate-* patterns with semantic tokens
 
 ### Phase 4: Intersection Device
 **Goal**: Distinctive Brand Victoria visual accent enhances key UI elements
