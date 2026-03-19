@@ -28,8 +28,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hardcoded Colors
 
-- [ ] **HARD-01**: Replace `violet-*` Tailwind classes with Brand Victoria equivalents (Teal/Blue)
-- [ ] **HARD-02**: Replace `purple-*` Tailwind classes with Brand Victoria equivalents
+- [x] **HARD-01**: Replace `violet-*` Tailwind classes with Brand Victoria equivalents (Teal/Blue)
+- [x] **HARD-02**: Replace `purple-*` Tailwind classes with Brand Victoria equivalents
 - [ ] **HARD-03**: Update hardcoded `dark:bg-gray-*`, `dark:text-slate-*` patterns in identified files
 
 ### Intersection Device
@@ -81,8 +81,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOGO-01 | Phase 2 | Complete |
 | LOGO-02 | Phase 2 | Complete |
 | LOGO-03 | Phase 2 | Complete |
-| HARD-01 | Phase 3 | Pending |
-| HARD-02 | Phase 3 | Pending |
+| HARD-01 | Phase 3 | Complete |
+| HARD-02 | Phase 3 | Complete |
 | HARD-03 | Phase 3 | Pending |
 | INT-01 | Phase 4 | Complete |
 | INT-02 | Phase 4 | Complete |
