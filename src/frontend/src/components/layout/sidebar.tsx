@@ -16,11 +16,12 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
       )}
     >
       {/* Logo/Branding */}
-      <div className="flex h-16 items-center justify-center border-b px-4 shrink-0">
+      <div className="flex h-16 items-center justify-center px-4 shrink-0">
          <Link to="/" className="flex items-center gap-2 font-semibold">
             <UnityCatalogLogo className={cn("h-8 w-8 transition-all", isCollapsed ? "h-10 w-10" : "h-10 w-10")} />
          </Link>
       </div>
+      <div className="intersection-device-bar" />
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto">

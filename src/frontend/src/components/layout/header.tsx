@@ -20,33 +20,34 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const navigate = useNavigate();
   
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-sidebar/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
-       {/* Sidebar Toggle Button */}
+    <>
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 bg-sidebar/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
+        {/* Sidebar Toggle Button */}
         <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleSidebar}
-            className="shrink-0" 
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="shrink-0"
         >
-             {isSidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-            <span className="sr-only">{t('header.toggleSidebar')}</span>
-         </Button>
+          {isSidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          <span className="sr-only">{t('header.toggleSidebar')}</span>
+        </Button>
 
-      {/* Global Search Bar Container - Centered and Wider */}
-      <div className="mx-auto max-w-2xl w-full">
-        <SearchBar placeholder={t('header.searchPlaceholder')} />
-      </div>
+        {/* Global Search Bar Container - Centered and Wider */}
+        <div className="mx-auto max-w-2xl w-full">
+          <SearchBar placeholder={t('header.searchPlaceholder')} />
+        </div>
 
-      {/* Right-aligned items */}
-      <div className="ml-auto flex items-center gap-2 shrink-0">
+        {/* Right-aligned items */}
+        <div className="ml-auto flex items-center gap-2 shrink-0">
           <ProjectChooser />
           <NotificationBell />
           <LanguageSelector />
-         <ThemeToggle />
+          <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={() => navigate('/user-guide')}
               >
@@ -56,8 +57,10 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
             </TooltipTrigger>
             <TooltipContent>{t('header.userGuide')}</TooltipContent>
           </Tooltip>
-        <UserInfo />
-      </div>
-    </header>
+          <UserInfo />
+        </div>
+      </header>
+      <div className="intersection-device-bar" />
+    </>
   );
 }
