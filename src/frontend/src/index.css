@@ -173,13 +173,5 @@
   @apply shadow-lg;
 }
 
-/* Workflow node card text visibility in dark mode */
-.dark .react-flow .text-muted-foreground {
-  @apply text-slate-300;
-}
-
-/* Ensure badges are visible in dark mode on colored backgrounds */
-.dark .react-flow [class*="bg-"][class*="-900"] .text-muted-foreground,
-.dark .react-flow [class*="bg-"][class*="-950"] .text-muted-foreground {
-  @apply text-slate-200;
-}
+/* Note: text-muted-foreground is now handled by semantic tokens (Phase 1)
+   and automatically supports dark mode - no override needed */
