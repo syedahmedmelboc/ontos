@@ -21,7 +21,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 bg-sidebar/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-sidebar-border bg-sidebar/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60">
         {/* Sidebar Toggle Button */}
         <Button
           variant="ghost"

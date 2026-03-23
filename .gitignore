@@ -83,3 +83,10 @@ vendor/
 *.log
 .cache/
 tmp/
+
+.claude/
+.bg-shell/
+.planning/WEBFONT/
+
+# ── GSD baseline (auto-generated) ──
+.gsd

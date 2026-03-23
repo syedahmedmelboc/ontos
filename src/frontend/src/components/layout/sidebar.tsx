@@ -11,14 +11,17 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar transition-all duration-300 ease-in-out overflow-x-hidden',
+        'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out overflow-x-hidden',
         isCollapsed ? 'w-14' : 'w-60' // Adjust width based on state
       )}
     >
       {/* Logo/Branding */}
-      <div className="flex h-16 items-center justify-center px-4 shrink-0">
-         <Link to="/" className="flex items-center gap-2 font-semibold">
-            <UnityCatalogLogo className={cn("h-8 w-8 transition-all", isCollapsed ? "h-10 w-10" : "h-10 w-10")} />
+      <div className="flex h-16 items-center justify-center px-2 shrink-0 overflow-hidden">
+         <Link to="/" className="flex items-center justify-center gap-2 font-semibold">
+            <UnityCatalogLogo className={cn(
+              "transition-all duration-300",
+              isCollapsed ? "h-8 w-8 object-contain" : "h-10 w-auto max-w-48 object-contain"
+            )} />
          </Link>
       </div>
       <div className="intersection-device-bar" />

@@ -108,8 +108,8 @@ export function Navigation({ isCollapsed }: NavigationProps) {
                         className={cn(
                           'flex items-center justify-center rounded-lg p-2 transition-colors',
                           location.pathname === homeLink.path
-                            ? 'bg-muted text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground'
                         )}
                         aria-label={homeLink.name}
                         asChild
@@ -132,8 +132,8 @@ export function Navigation({ isCollapsed }: NavigationProps) {
                       cn(
                         'flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors',
                         navIsActive
-                          ? 'bg-muted text-primary'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground'
                       )
                     }
                   >
@@ -214,7 +214,7 @@ export function Navigation({ isCollapsed }: NavigationProps) {
           {navigationGroups.map((group) => (
             <div key={group.name} className={cn("w-full", isCollapsed ? "" : "mb-2 last:mb-0")}>
               {!isCollapsed && group.items.length > 0 && (
-                <h2 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <h2 className="px-2 py-1 text-xs font-semibold text-sidebar-muted-foreground uppercase tracking-wider">
                   {translateGroupName(group.name)}
                 </h2>
               )}
@@ -231,8 +231,8 @@ export function Navigation({ isCollapsed }: NavigationProps) {
                         className={cn(
                           'flex items-center justify-center rounded-lg p-2 transition-colors',
                           isActive
-                            ? 'bg-muted text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground'
                         )}
                         aria-label={translatedName}
                         asChild
@@ -264,8 +264,8 @@ export function Navigation({ isCollapsed }: NavigationProps) {
                       cn(
                         'flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors',
                         navIsActive
-                          ? 'bg-muted text-primary'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-sidebar-muted-foreground hover:bg-sidebar-muted hover:text-sidebar-foreground'
                       )
                     }
                   >

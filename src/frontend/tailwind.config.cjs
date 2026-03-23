@@ -23,7 +23,13 @@ module.exports = {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))'
+  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				muted: 'hsl(var(--sidebar-muted))',
+  				'muted-foreground': 'hsl(var(--sidebar-muted-foreground))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+  				border: 'hsl(var(--sidebar-border))'
   			},
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
