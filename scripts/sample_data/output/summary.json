@@ -1,0 +1,44 @@
+{
+  "seed": 42,
+  "generated_at": "2026-03-25T10:39:13.037321",
+  "entities": {
+    "customers": 1000,
+    "menu_categories": 15,
+    "menu_items": 91,
+    "orders": 5000,
+    "order_items": 15449,
+    "reservations": 1710,
+    "suppliers": 10,
+    "inventory_items": 39,
+    "staff": 30,
+    "reviews": 1500
+  },
+  "files": [
+    "customers.json",
+    "customers.csv",
+    "menu_categories.json",
+    "menu_categories.csv",
+    "menu_items.json",
+    "menu_items.csv",
+    "orders.json",
+    "orders.csv",
+    "order_items.json",
+    "order_items.csv",
+    "reservations.json",
+    "reservations.csv",
+    "suppliers.json",
+    "suppliers.csv",
+    "inventory.json",
+    "inventory.csv",
+    "staff.json",
+    "staff.csv",
+    "reviews.json",
+    "reviews.csv"
+  ],
+  "validation": {
+    "valid": true,
+    "issues": [],
+    "total_checks": 5000
+  },
+  "generation_time_seconds": 1.0
+}
