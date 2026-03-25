@@ -157,7 +157,8 @@ export default function DataDomainsView() {
   };
 
   const handleNavigateToDomain = (domainId: string) => {
-    navigate(`${pathname}/${domainId}`);
+    // Navigate to the details page at the top-level route, not under /settings
+    navigate(`/data-domains/${domainId}`);
   };
 
   const columns = useMemo<ColumnDef<DataDomain>[]>(() => [
@@ -282,7 +283,7 @@ export default function DataDomainsView() {
   ], [canWrite, canAdmin, navigate, pathname, t]);
 
   return (
-    <SettingsPageWrapper title={t('title')}>
+    <SettingsPageWrapper title={t('title')} featureId="data-domains">
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
            <BoxSelect className="w-8 h-8" />

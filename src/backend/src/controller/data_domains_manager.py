@@ -118,13 +118,21 @@ class DataDomainManager(DeliveryMixin, SearchableAsset):
             db.add(db_domain)
             db.flush() 
             db.refresh(db_domain, attribute_names=['id', 'parent']) # Refresh to get ID and potentially loaded parent
-            # Eagerly load children for count, or rely on lazy load if simple len() is fine.
-            # For now, let's assume session context handles children for len()
-            # If specific loading is needed: db.refresh(db_domain, attribute_names=['children'])
-            # but this loads all children objects, which might be heavy.
-            # A subquery for count in repository.get might be better for children_count.
-            # For now, using len(db_domain.children) implicitly assumes they are accessible.
-
+            
+            # Handle tags via TagsManager
+            if domain_in.tags:
+                try:
+                    self.tags_manager.set_tags_for_entity(
+                        db,
+                        entity_id=str(db_domain.id),
+                        entity_type="data_domain",
+                        tags=domain_in.tags,
+                        user_email=current_user_id
+                    )
+                    logger.debug(f"Assigned {len(domain_in.tags)} tags to domain {db_domain.id}")
+                except Exception as tag_error:
+                    logger.warning(f"Failed to assign tags to domain {db_domain.id}: {tag_error}")
+            
             logger.debug(f"Successfully created data domain '{db_domain.name}' with id: {db_domain.id}")
             
             # Log the change (commit will be handled by the route)
@@ -232,7 +240,7 @@ class DataDomainManager(DeliveryMixin, SearchableAsset):
                 raise NotFoundError(f"Parent domain with id '{domain_in.parent_id}' not found.")
         
         # obj_in here is Pydantic model, repository.update expects a dict or Pydantic model
-        update_data = domain_in.model_dump(exclude_unset=True)
+        update_data = domain_in.model_dump(exclude_unset=True, exclude={'tags'})
 
         # Tags are now handled by TagsManager - no serialization needed
 
@@ -240,6 +248,21 @@ class DataDomainManager(DeliveryMixin, SearchableAsset):
             # The CRUDBase update method takes obj_in which can be a dict or Pydantic model.
             # It iterates fields and sets them on db_obj.
             updated_db_domain = self.repository.update(db=db, db_obj=db_domain, obj_in=update_data)
+            
+            # Handle tags via TagsManager
+            if domain_in.tags is not None:  # Check for None to distinguish between "not provided" and "empty list"
+                try:
+                    self.tags_manager.set_tags_for_entity(
+                        db,
+                        entity_id=str(domain_id),
+                        entity_type="data_domain",
+                        tags=domain_in.tags,
+                        user_email=current_user_id
+                    )
+                    logger.debug(f"Updated tags for domain {domain_id}: {len(domain_in.tags)} tags")
+                except Exception as tag_error:
+                    logger.warning(f"Failed to update tags for domain {domain_id}: {tag_error}")
+            
             # After update, refresh to get potentially updated relationships or counts
             db.flush()
             db.refresh(updated_db_domain, attribute_names=['parent']) # Ensure parent is loaded if parent_id changed
